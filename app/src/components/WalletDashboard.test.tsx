@@ -19,17 +19,10 @@ describe("WalletDashboard UX evidence", () => {
 		expect(html).toContain("Vault Mode");
 		expect(html).toContain("Wallet parity");
 		expect(html).toContain("Pre-sign simulation");
-		expect(html).toContain("Cross-chain bridge");
 		expect(html).toContain("<strong>0</strong><span>Planned</span>");
 		expect(html).toContain("Network settings");
 		expect(html).toContain("Mainnet spending requires explicit approval");
 		expect(html).toContain("Security settings");
 		expect(html).toContain("Auto-lock");
-		expect(html).toContain("Fiat on-ramp");
-		expect(html).toContain("Provider KYC handoff");
-		expect(html).toContain("Bridge routes");
-		expect(html).toContain("Sui to Ethereum");
-		expect(html).toContain("Advanced trading");
-		expect(html).toContain("Perps");
 	});
 });

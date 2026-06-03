@@ -25,12 +25,6 @@ import {
 import { useState } from "react";
 import { buildCommandMenu } from "../lib/command-menu";
 import {
-	buildAdvancedTradingModel,
-	buildBridgeModel,
-	buildFiatOnrampModel,
-	chainLabel,
-} from "../lib/consumer-capabilities";
-import {
 	activityRows,
 	defiRows,
 	demoPreview,
@@ -100,18 +94,6 @@ const autoLockState = getAutoLockState(securitySettings, {
 	nowMs: 181_000,
 });
 const secretExportPolicy = getSecretExportPolicy(securitySettings);
-const fiatOnrampModel = buildFiatOnrampModel({
-	activeNetwork: "testnet",
-	providerCredentialsReady: false,
-});
-const bridgeModel = buildBridgeModel({
-	activeChain: "sui",
-	providerRoutesReady: false,
-});
-const advancedTradingModel = buildAdvancedTradingModel({
-	providerCredentialsReady: false,
-	highRiskTradingEnabled: false,
-});
 const paritySummary = summarizeWalletParity();
 const sendAmountMist = 250_000_000n;
 const sendReadiness = getSendReadiness({
@@ -364,111 +346,6 @@ export const WalletDashboard = () => {
 									{secretExportPolicy.allowed ? "Allowed" : "Disabled"}
 								</em>
 							</div>
-						</div>
-					</section>
-
-					<section className="consumerPanel">
-						<div className="sectionHeader compact">
-							<span>Fiat on-ramp</span>
-							<Coins size={18} />
-						</div>
-						<div className="settingList">
-							<div className="settingRow">
-								<div>
-									<strong>Provider KYC handoff</strong>
-									<span>{fiatOnrampModel.reason}</span>
-								</div>
-								<em
-									className={
-										fiatOnrampModel.status === "ready" ? "" : "blocked"
-									}
-								>
-									{fiatOnrampModel.status}
-								</em>
-							</div>
-							{fiatOnrampModel.providers.map((provider) => (
-								<div className="settingRow" key={provider.id}>
-									<div>
-										<strong>{provider.label}</strong>
-										<span>{provider.supports.join(" / ")} · KYC required</span>
-									</div>
-									<em className={provider.status === "ready" ? "" : "blocked"}>
-										{provider.status}
-									</em>
-								</div>
-							))}
-						</div>
-					</section>
-
-					<section className="bridgePanel">
-						<div className="sectionHeader compact">
-							<span>Bridge routes</span>
-							<Repeat2 size={18} />
-						</div>
-						<div className="settingList">
-							<div className="settingRow">
-								<div>
-									<strong>Provider routing</strong>
-									<span>{bridgeModel.reason}</span>
-								</div>
-								<em className={bridgeModel.status === "ready" ? "" : "blocked"}>
-									{bridgeModel.status}
-								</em>
-							</div>
-							{bridgeModel.routes.slice(0, 3).map((route) => (
-								<div
-									className="settingRow"
-									key={`${route.fromChain}-${route.toChain}`}
-								>
-									<div>
-										<strong>
-											{chainLabel(route.fromChain)} to{" "}
-											{chainLabel(route.toChain)}
-										</strong>
-										<span>{route.providers.join(" / ")}</span>
-									</div>
-									<em className={route.status === "ready" ? "" : "blocked"}>
-										{route.status}
-									</em>
-								</div>
-							))}
-						</div>
-					</section>
-
-					<section className="advancedPanel">
-						<div className="sectionHeader compact">
-							<span>Advanced trading</span>
-							<Sparkles size={18} />
-						</div>
-						<div className="settingList">
-							<div className="settingRow">
-								<div>
-									<strong>High-risk mode</strong>
-									<span>{advancedTradingModel.reason}</span>
-								</div>
-								<em
-									className={
-										advancedTradingModel.status === "ready" ? "" : "blocked"
-									}
-								>
-									{advancedTradingModel.status}
-								</em>
-							</div>
-							{advancedTradingModel.items.slice(0, 4).map((item) => (
-								<div className="settingRow" key={item.id}>
-									<div>
-										<strong>{item.label}</strong>
-										<span>
-											{item.requiresHighRiskApproval
-												? "Explicit high-risk approval"
-												: "Provider-gated"}
-										</span>
-									</div>
-									<em className={item.status === "ready" ? "" : "blocked"}>
-										{item.status}
-									</em>
-								</div>
-							))}
 						</div>
 					</section>
 

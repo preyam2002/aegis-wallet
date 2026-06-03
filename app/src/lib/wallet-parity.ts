@@ -52,19 +52,6 @@ export const walletParityMatrix: WalletParityCapability[] = [
 		},
 	},
 	{
-		id: "fiat-onramp",
-		category: "Trading and earn",
-		capability: "Buy and sell crypto through vetted fiat providers",
-		aegisStatus: "gated",
-		aegisEvidence:
-			"Provider model covers Transak, Banxa, MoonPay, KYC handoff, and mainnet-only execution gates",
-		peers: {
-			Slush: "Buy/Sell provider handoff",
-			MetaMask: "Buy and sell crypto",
-			Phantom: "Buy and sell flows in Trade",
-		},
-	},
-	{
 		id: "nft-collectibles",
 		category: "Assets",
 		capability:
@@ -166,30 +153,6 @@ export const walletParityMatrix: WalletParityCapability[] = [
 			Slush: "Account recovery surfaces",
 			MetaMask: "Security alerts, seed phrase recovery",
 			Phantom: "Self-custody security guidance and warnings",
-		},
-	},
-	{
-		id: "bridge-multichain",
-		category: "Reach",
-		capability: "Cross-chain bridge and multichain asset management",
-		aegisStatus: "gated",
-		aegisEvidence:
-			"Bridge intent model covers Sui, Ethereum, Solana routes through Sui Bridge, Wormhole, and CCTP; live execution is provider-gated",
-		peers: {
-			MetaMask: "Multichain wallet, swaps and bridging",
-			Phantom: "Multichain wallet and cross-chain swapper",
-		},
-	},
-	{
-		id: "advanced-consumer-trading",
-		category: "Reach",
-		capability: "Perps, prediction markets, tokenized stocks, chat, cash card",
-		aegisStatus: "gated",
-		aegisEvidence:
-			"Advanced consumer catalog covers Phantom-class surfaces and keeps high-risk trading provider-gated",
-		peers: {
-			Phantom:
-				"Perps, prediction markets, tokenized stocks, chat, and Phantom Cash",
 		},
 	},
 ];

@@ -14,7 +14,6 @@ describe("wallet feature parity contract", () => {
 				"portfolio-activity",
 				"send-receive-qr",
 				"swap-stake-defi",
-				"fiat-onramp",
 				"nft-collectibles",
 				"dapp-extension-mobile",
 				"safe-signing",
@@ -23,8 +22,6 @@ describe("wallet feature parity contract", () => {
 				"security-settings",
 				"passkey-zklogin-sponsored",
 				"vault-recovery",
-				"bridge-multichain",
-				"advanced-consumer-trading",
 			]),
 		);
 	});
@@ -33,11 +30,11 @@ describe("wallet feature parity contract", () => {
 		const summary = summarizeWalletParity();
 		const gaps = getWalletParityGaps();
 
-		expect(summary.total).toBe(14);
+		expect(summary.total).toBe(11);
 		expect(summary.implemented).toBe(7);
-		expect(summary.gated).toBe(7);
+		expect(summary.gated).toBe(4);
 		expect(summary.planned).toBe(0);
-		expect(gaps).toHaveLength(7);
+		expect(gaps).toHaveLength(4);
 		expect(
 			walletParityMatrix.find((row) => row.id === "network-settings")
 				?.aegisStatus,
@@ -47,14 +44,11 @@ describe("wallet feature parity contract", () => {
 				?.aegisStatus,
 		).toBe("implemented");
 		expect(
-			walletParityMatrix.find((row) => row.id === "fiat-onramp")?.aegisStatus,
-		).toBe("gated");
-		expect(
-			walletParityMatrix.find((row) => row.id === "bridge-multichain")
+			walletParityMatrix.find((row) => row.id === "swap-stake-defi")
 				?.aegisStatus,
 		).toBe("gated");
 		expect(
-			walletParityMatrix.find((row) => row.id === "advanced-consumer-trading")
+			walletParityMatrix.find((row) => row.id === "passkey-zklogin-sponsored")
 				?.aegisStatus,
 		).toBe("gated");
 		expect(
