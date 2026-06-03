@@ -1,0 +1,10 @@
+[package]
+name = "aegis"
+version = "0.1.0"
+edition = "2024.beta"
+
+[dependencies]
+enclave = { local = "../enclave" }
+
+[addresses]
+aegis = "0x0"
