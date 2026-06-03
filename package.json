@@ -1,0 +1,48 @@
+{
+	"name": "aegis-wallet",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "pnpm --filter @aegis/app dev",
+		"build:extension": "tsx scripts/build-extension.ts",
+		"build:mobile": "tsx scripts/build-mobile.ts",
+		"preflight:external-gates": "tsx scripts/external-gates-preflight.ts",
+		"test": "pnpm -r test",
+		"test:integration:enclave-cosign": "tsx scripts/enclave-cosign-smoke.ts",
+		"test:integration:extension-background": "tsx scripts/extension-background-smoke.ts",
+		"test:integration:extension-content": "tsx scripts/extension-content-smoke.ts",
+		"test:integration:extension-popup": "tsx scripts/extension-popup-smoke.ts",
+		"test:integration:mobile-bundle": "tsx scripts/mobile-bundle-smoke.ts",
+		"test:integration:passkey": "tsx scripts/testnet-passkey-execute.ts",
+		"test:integration:activity": "tsx scripts/testnet-activity-probe.ts",
+		"test:integration:portfolio": "tsx scripts/testnet-portfolio-probe.ts",
+		"test:integration:portfolio-value": "tsx scripts/testnet-portfolio-value-probe.ts",
+		"test:integration:token-metadata": "tsx scripts/testnet-token-metadata-probe.ts",
+		"test:integration:wallet-snapshot": "tsx scripts/testnet-wallet-snapshot-probe.ts",
+		"test:integration:policy-receipts": "tsx scripts/testnet-policy-receipts.ts",
+		"test:integration:seal-recovery": "tsx scripts/testnet-seal-recovery.ts",
+		"test:integration:seal-vault-recovery": "tsx scripts/testnet-seal-vault-recovery.ts",
+		"test:integration:swap-quote": "tsx scripts/mainnet-swap-quote.ts",
+		"test:integration:send": "tsx scripts/testnet-send-execute.ts",
+		"test:integration:stake": "tsx scripts/testnet-stake-execute.ts",
+		"test:integration:localnet-stake": "tsx scripts/localnet-stake-execute.ts",
+		"test:integration:staking-overview": "tsx scripts/testnet-staking-overview-probe.ts",
+		"test:integration:testnet": "tsx scripts/testnet-readonly-probe.ts",
+		"test:integration:simulate": "tsx scripts/testnet-simulate-probe.ts",
+		"test:integration:vault-execute": "tsx scripts/testnet-vault-execute.ts",
+		"test:integration:vault-recovery-execute": "tsx scripts/testnet-vault-recovery-execute.ts",
+		"register:enclave": "tsx scripts/register-nautilus-enclave.ts",
+		"typecheck": "pnpm -r typecheck",
+		"lint": "pnpm -r lint"
+	},
+	"dependencies": {
+		"@aegis/shared": "workspace:*",
+		"@mysten/seal": "1.1.3",
+		"@mysten/sui": "2.17.0"
+	},
+	"devDependencies": {
+		"tsx": "4.22.4"
+	},
+	"packageManager": "pnpm@11.5.0"
+}

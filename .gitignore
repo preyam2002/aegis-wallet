@@ -1,0 +1,20 @@
+node_modules
+.next
+dist
+target
+move/build
+move/**/build/
+.env
+.env.*
+*.log
+*.tsbuildinfo
+
+# secrets / local config (never commit)
+*.pem
+*.key
+**/*keystore*
+.sui/
+sui_config/
+
+# os
+.DS_Store
