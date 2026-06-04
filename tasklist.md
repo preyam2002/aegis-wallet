@@ -179,3 +179,22 @@ pnpm test:integration:policy-receipts      # resolves the live on-chain PolicyRe
 ```
 
 **BLOCKING DECISION (T2.0) before any of the above:** pick **(A) replicate the Aletheia AWS Nitro box** (vanilla Nautilus ed25519 + own `EnclaveConfig` — matches all current code, no rework; default lean) or **(B) Marlin Oyster** (managed/Docker, no AWS, but secp256k1 + PCR16 + own registry ⇒ Move + multisig rework). `docker`, `nitro-cli`, `aws`, `oyster`, `marlin` are not installed locally; the agent cannot SSH/AWS-login/provision — this needs the user.
+
+## T2.0 attestation decision + Aletheia reuse — 2026-06-05
+
+**Attestation decision: PATH A (replicate the Aletheia AWS Nitro box).** User chose A and pointed at the local `~/repo/Aletheia` repo ("use those"). No Move/multisig rework; Aegis keeps its stronger on-chain path.
+
+**Key finding — Aletheia's existing attestation is NOT a reusable trust anchor for Aegis.** Decoded `~/repo/Aletheia/attestation.json` (minimal CBOR/COSE decoder, `/tmp/decode_attestation.py`):
+- PCR0/1/2 are **all-zero** → it is a `--debug-mode` build (`nautilus-oracle` Makefile `run-enclave` uses `--debug-mode`). Zero PCRs measure nothing.
+- The enclave ed25519 pubkey (`9f29396fc27d8ea5…`) is bound in **`user_data`**, and the standard Nitro **`public_key` field is null**. Aegis's `register_enclave` stores `document.public_key()` — so Aletheia's doc would register an empty key. Aletheia compensated with a custom `nautilus_oracle::register_enclave_key(pubkey, doc, adminCap)` that trusts attestation **off-chain** (weaker). Aegis keeps the stronger on-chain `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path.
+- Conclusion: reuse Aletheia's **AWS box + proven deploy/proxy scripts**, NOT its attestation doc or Move registry. A fresh **non-debug Aegis-app** run is required.
+
+**Reusable infra ported into `enclave/` (Sui-only, adapted from `~/repo/Aletheia/nautilus-oracle`):**
+- `enclave/run.sh` — in-enclave init: loopback/DNS, Sui outbound (`127.0.0.4:443 → vsock:3:8003`), inbound (`vsock:3000 → tcp:localhost:3000`), then exec `aegis-enclave`.
+- `enclave/setup-network-proxy.sh` — host systemd `socat VSOCK-LISTEN:8003 → fullnode.testnet.sui.io:443` (dropped Aletheia's OpenAI/Walrus legs).
+- `enclave/Dockerfile` — installs `socat`+`iproute2`, bakes policy as build-args (→ part of PCR measurement), `ENTRYPOINT run.sh` (was the bare binary, which could not network inside Nitro).
+- `enclave/Makefile` — `host-proxy` target, `BUILD_ARGS` pass-through, and a clearly-labelled `run-enclave-debug` (never register a debug enclave). Production `run-enclave` already had no `--debug-mode`.
+- `enclave/DEPLOY.md` — one-page path-A runbook (build → run → proxy → fetch `/get_attestation` → `pnpm register:enclave` → prove attested).
+- Verified: `CARGO_HOME=/private/tmp/aegis-cargo cargo test` 14 pass; `make -n build-enclave` + `sh -n`/`bash -n` on both scripts clean (2026-06-05).
+
+**Still external (needs the user on the Nitro host):** run `make build-enclave` + `make run-enclave` (production) + `make host-proxy` on the Aletheia box, then `pnpm register:enclave` against the real non-debug attestation. The agent cannot SSH/AWS/nitro-cli/docker locally.
