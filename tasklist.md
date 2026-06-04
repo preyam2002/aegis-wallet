@@ -157,3 +157,25 @@ The demo needs a real testnet transaction whose simulation shows a net-outflow /
 - **Real net-outflow digest:** native send `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` (2026-06-03), verified on-chain balance changes: recipient `+1000` MIST, sender `-1998880` MIST. This is a confirmed testnet net-outflow diff — the SimSummary `sends`/`objectsLeaving` shape the signing screen renders.
 - **SimSummary shape (for the demo overlay):** `sends: [{ coinType: 0x2::sui::SUI, amount: "-1998880" /* incl. gas */, to: 0x38e8…9212 }]`, `objectsLeaving: []`, `risk: [unknown-recipient (this recipient is not in the address book)]`, `gas: ~1.9M MIST`.
 - **Live re-verify BLOCKED:** `pnpm test:integration:simulate` returned `RESOURCE_EXHAUSTED` (gRPC 429) from the public testnet fullnode `SimulateTransaction` on every attempt 2026-06-04/05 — IP rate limit, not a code regression (V1/V2/V3 all green). Re-run `pnpm test:integration:simulate` when the public RPC clears to capture a fresh simulate-only diff; the recorded send digest above already provides on-chain demo proof in the meantime.
+
+## Phase 2 runbook — 2026-06-05 (pre-hardware prep done; gated on external enclave)
+
+Local pre-hardware checks for Phase 2 are GREEN and there is **no remaining local code work** — the attestation/register pipeline is fully wired and waits only on real PCRs + a real attestation document from an actual Nitro/Marlin enclave.
+
+- `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave` — 14 pass (incl. the Nitro `public_key`-binding test).
+- `make -n build-enclave` (dry-run) is clean and uses the **production** path: `docker build` → `nitro-cli build-enclave --output-file out/aegis-enclave.eif` → `make pcrs` (extracts PCR0/1/2, asserts each is 96 hex chars / 48-byte SHA-384, writes `out/pcr-values.json`). NOT `run-debug` (which yields all-zero PCRs).
+- `scripts/register-nautilus-enclave.ts` (`pnpm register:enclave`) reads PCRs from `AEGIS_PCR0/1/2` or `AEGIS_PCRS_JSON` (the `out/pcr-values.json` shape), and the attestation doc from `AEGIS_ATTESTATION_BASE64` or `AEGIS_ATTESTATION_PATH`; it calls `aegis::attestation::create_enclave_config` then `0x2::nitro_attestation::load_nitro_attestation` + `enclave::register_enclave<AEGIS>`. Testnet defaults for package / enclave-package / Nautilus-cap ids are baked in.
+
+**Once the external gate is open (user provides a Nitro/Marlin enclave), the sequence is:**
+```bash
+cd enclave && make build-enclave          # on the Nitro host: produces out/aegis-enclave.eif + out/pcr-values.json
+make run-enclave                           # boot the enclave; GET /get_attestation -> attestation doc (ed25519 pubkey in public_key)
+# save the attestation doc JSON locally, then from repo root:
+AEGIS_PCRS_JSON=enclave/out/pcr-values.json AEGIS_ATTESTATION_PATH=<doc.json> pnpm register:enclave
+# then point the vault executor at the attested enclave (mode must be "nitro-attested"):
+pnpm test:integration:enclave-cosign       # confirms /get_attestation mode + matching pubkey
+pnpm test:integration:vault-execute        # attested 2-of-2 benign exec + seeded-drain refusal
+pnpm test:integration:policy-receipts      # resolves the live on-chain PolicyRejected digest
+```
+
+**BLOCKING DECISION (T2.0) before any of the above:** pick **(A) replicate the Aletheia AWS Nitro box** (vanilla Nautilus ed25519 + own `EnclaveConfig` — matches all current code, no rework; default lean) or **(B) Marlin Oyster** (managed/Docker, no AWS, but secp256k1 + PCR16 + own registry ⇒ Move + multisig rework). `docker`, `nitro-cli`, `aws`, `oyster`, `marlin` are not installed locally; the agent cannot SSH/AWS-login/provision — this needs the user.
