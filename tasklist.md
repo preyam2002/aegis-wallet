@@ -149,3 +149,11 @@ Half the Overflow prize unlocks on mainnet deploy. This enumerates exactly what 
 - **Live mainnet swap execution** — same gate; a real swap moves real funds. Read-only quoting (above) is the submitted state until approved.
 
 **Preflight gate of record:** `pnpm preflight:external-gates` reports `gate: "mainnet-deploy-and-swap-execution"`, `ready: false`, `approvalEnv: "AEGIS_ALLOW_MAINNET_SPEND=true"` (confirmed 2026-06-05). Until the user approves and funds a mainnet key, **mainnet read-only is the accepted submitted state** and the testnet deploys (T1.8 digests above) stand as the on-chain evidence.
+
+## Demo evidence — 2026-06-05 (T1.2, live re-capture RPC-blocked)
+
+The demo needs a real testnet transaction whose simulation shows a net-outflow / object-leaving diff (the thing a drainer does). Prior captured on-chain evidence stands for this:
+
+- **Real net-outflow digest:** native send `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` (2026-06-03), verified on-chain balance changes: recipient `+1000` MIST, sender `-1998880` MIST. This is a confirmed testnet net-outflow diff — the SimSummary `sends`/`objectsLeaving` shape the signing screen renders.
+- **SimSummary shape (for the demo overlay):** `sends: [{ coinType: 0x2::sui::SUI, amount: "-1998880" /* incl. gas */, to: 0x38e8…9212 }]`, `objectsLeaving: []`, `risk: [unknown-recipient (this recipient is not in the address book)]`, `gas: ~1.9M MIST`.
+- **Live re-verify BLOCKED:** `pnpm test:integration:simulate` returned `RESOURCE_EXHAUSTED` (gRPC 429) from the public testnet fullnode `SimulateTransaction` on every attempt 2026-06-04/05 — IP rate limit, not a code regression (V1/V2/V3 all green). Re-run `pnpm test:integration:simulate` when the public RPC clears to capture a fresh simulate-only diff; the recorded send digest above already provides on-chain demo proof in the meantime.
