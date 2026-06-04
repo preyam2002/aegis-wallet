@@ -127,3 +127,25 @@ Decisions from the Sui Overflow 2026 strategy session. Execution plan: `docs/sup
 - [ ] **Keep cut scope cut.** No fiat on-ramp, no cross-chain bridge, no advanced consumer trading (perps/prediction markets/tokenized stocks/chat/cash card). These were removed on 2026-06-03 as spec §1 non-goals; do not re-introduce them for the demo.
 - [ ] **Do not fake Vault Mode.** Local-enclave evidence (`pnpm test:integration:vault-execute`) is valid for dev/testnet demos but is explicitly NOT Nitro/Marlin proof. If the real-attestation spike does not land by the deadline, ship the Safe Wallet (MVP) and present Vault Mode honestly as local-enclave + the ready Docker/EIF/register path.
 - [ ] **Wallet lane is crowded** (near Slush, the official Sui wallet). The entire pitch must be SAFETY, not feature parity.
+
+## Mainnet readiness — 2026-06-05 (T1.5)
+
+Half the Overflow prize unlocks on mainnet deploy. This enumerates exactly what can go to mainnet WITHOUT spending unapproved funds, and the explicit approval gate for what does.
+
+**Deployable / proven without spend (submitted state is acceptable here):**
+- **Mainnet read-only swap routing — PROVEN.** `pnpm test:integration:swap-quote` exited 0 on 2026-06-05 against mainnet: `aftermath` route, `walletFeeBps: 0`, `10000000` MIST SUI → `7620` USDC.e (`0x5d4b...a93bf::coin::COIN`) via protocols `Obric`/`Bluefin`, `routeCount: 1`. This is a live mainnet read path and needs no funding.
+- **App pointed at a mainnet fullnode read-only** — portfolio/activity/simulation read paths use `client.core.*` and work against a mainnet `baseUrl` with no signing. No spend.
+- **Move tests green** for `move/aegis` (12) and `move/enclave` (1) — the packages compile and pass unit tests, ready to publish once approved.
+
+**Approval-gated (spends real mainnet SUI — DO NOT run without `AEGIS_ALLOW_MAINNET_SPEND=true` and a funded mainnet key):**
+- **Publish `move/aegis` to mainnet.** The `aegis` package depends on `enclave = { local = "../enclave" }`, so publish order is enclave first, then point `aegis` at the published enclave address, then publish `aegis`:
+  ```bash
+  sui client switch --env mainnet            # requires a funded mainnet address
+  cd move/enclave && sui client publish      # publish the vendored Nautilus enclave package first
+  # set enclave published-at in move/enclave/Move.toml, then:
+  cd ../aegis && sui client publish          # publishes aegis (policy/recovery/subaccount/attestation)
+  ```
+  Gas is auto-budgeted by the current Sui CLI; this spends real SUI and is the prize-half action. It is intentionally NOT scripted to avoid an accidental spend.
+- **Live mainnet swap execution** — same gate; a real swap moves real funds. Read-only quoting (above) is the submitted state until approved.
+
+**Preflight gate of record:** `pnpm preflight:external-gates` reports `gate: "mainnet-deploy-and-swap-execution"`, `ready: false`, `approvalEnv: "AEGIS_ALLOW_MAINNET_SPEND=true"` (confirmed 2026-06-05). Until the user approves and funds a mainnet key, **mainnet read-only is the accepted submitted state** and the testnet deploys (T1.8 digests above) stand as the on-chain evidence.
