@@ -28,7 +28,7 @@ Nautilus TEE co-signer — the stretch differentiator).
     It is **NOT** a valid trust anchor for Aegis. Reuse the AWS **box + scripts**, not the doc or
     Aletheia's off-chain-trust Move registry. Aegis keeps its stronger on-chain
     `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path. A fresh **non-debug Aegis-app**
-    run is required. (Decode any doc with `python3 /tmp/decode_attestation.py <file>`.)
+    run is required. (Decode any doc with `python3 scripts/decode-attestation.py <file>` to confirm non-zero PCRs.)
 
 ## Baselines (all green as of 2026-06-05) — run these first to confirm no regression
 ```bash

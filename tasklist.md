@@ -187,7 +187,7 @@ pnpm test:integration:policy-receipts      # resolves the live on-chain PolicyRe
 
 **Attestation decision: PATH A (replicate the Aletheia AWS Nitro box).** User chose A and pointed at the local `~/repo/Aletheia` repo ("use those"). No Move/multisig rework; Aegis keeps its stronger on-chain path.
 
-**Key finding — Aletheia's existing attestation is NOT a reusable trust anchor for Aegis.** Decoded `~/repo/Aletheia/attestation.json` (minimal CBOR/COSE decoder, `/tmp/decode_attestation.py`):
+**Key finding — Aletheia's existing attestation is NOT a reusable trust anchor for Aegis.** Decoded `~/repo/Aletheia/attestation.json` (minimal CBOR/COSE decoder, `scripts/decode-attestation.py`):
 - PCR0/1/2 are **all-zero** → it is a `--debug-mode` build (`nautilus-oracle` Makefile `run-enclave` uses `--debug-mode`). Zero PCRs measure nothing.
 - The enclave ed25519 pubkey (`9f29396fc27d8ea5…`) is bound in **`user_data`**, and the standard Nitro **`public_key` field is null**. Aegis's `register_enclave` stores `document.public_key()` — so Aletheia's doc would register an empty key. Aletheia compensated with a custom `nautilus_oracle::register_enclave_key(pubkey, doc, adminCap)` that trusts attestation **off-chain** (weaker). Aegis keeps the stronger on-chain `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path.
 - Conclusion: reuse Aletheia's **AWS box + proven deploy/proxy scripts**, NOT its attestation doc or Move registry. A fresh **non-debug Aegis-app** run is required.

@@ -2,7 +2,7 @@
 
 Reuses the proven AWS-Nitro setup from Aletheia (`~/repo/Aletheia/nautilus-oracle`), reduced to the single Sui-fullnode outbound leg Aegis needs. Aegis's on-chain attestation path (`aegis::attestation` + `0x2::nitro_attestation::load_nitro_attestation`) is **stronger** than Aletheia's — it verifies the doc on-chain and asserts PCR match — so we keep Aegis's Move and only borrow the EC2 + proxy infra.
 
-> ⚠️ **Aletheia's existing `attestation.json` is NOT reusable as Aegis's trust anchor.** It is a `--debug-mode` build: PCR0/1/2 are all-zero (measures nothing) and the enclave key is bound in `user_data`, not the Nitro `public_key` field that `document.public_key()` reads (Aletheia compensated with an off-chain-trust registry). Aegis must run its **own** enclave app in **production** (no `--debug-mode`) to get real PCRs and a `public_key`-bound key. Decode any doc with `python3 /tmp/decode_attestation.py <file>` to confirm non-zero PCRs before registering.
+> ⚠️ **Aletheia's existing `attestation.json` is NOT reusable as Aegis's trust anchor.** It is a `--debug-mode` build: PCR0/1/2 are all-zero (measures nothing) and the enclave key is bound in `user_data`, not the Nitro `public_key` field that `document.public_key()` reads (Aletheia compensated with an off-chain-trust registry). Aegis must run its **own** enclave app in **production** (no `--debug-mode`) to get real PCRs and a `public_key`-bound key. Decode any doc with `python3 scripts/decode-attestation.py <file>` to confirm non-zero PCRs before registering.
 
 ## 0. Host prereqs (the Aletheia box already satisfies these)
 - Nitro-enabled EC2 instance, `nitro-cli` + `docker` installed, the nitro-enclaves allocator reserving CPU/memory, and `socat` + `jq` on the host.
