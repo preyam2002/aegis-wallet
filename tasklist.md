@@ -1,5 +1,8 @@
 # Aegis Wallet Tasklist
 
+> **Resuming?** Read [`HANDOFF.md`](./HANDOFF.md) first (1-page state + exact next steps), then this log.
+> Agent conventions + honesty guardrails are in [`AGENTS.md`](./AGENTS.md). Works for Claude or Codex.
+
 Canonical spec: `docs/specs/aegis-wallet-build-ready-spec.md`.
 
 Goal: complete the full spec end-to-end, with every wallet capability in the spec implemented and integration tested. Do not mark the goal complete until all acceptance tests in spec section 11 are proven with current evidence.

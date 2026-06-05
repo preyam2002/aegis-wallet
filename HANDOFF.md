@@ -1,0 +1,80 @@
+# Aegis Wallet — Handoff / Continue Here
+
+> Single resume anchor for the next session (Claude **or** Codex). Read this first,
+> then `tasklist.md` (detailed evidence log) and `docs/superpowers/plans/2026-06-04-aegis-completion.md` (the plan).
+> Last updated: 2026-06-05. `main` @ `e0eb766` (pushed to `github.com/preyam2002/aegis-wallet`, private).
+
+## What Aegis is
+A safety-first Sui wallet. Pitch: *"the Sui wallet that won't let you get drained — a nutrition
+label and a bouncer for every transaction."* Sui Overflow 2026 entry, **DeFi & Payments** track
+(deadline **June 21 2026 PT**). Two pillars: **Safe Wallet** (pre-sign simulation + risk scanner +
+address-poisoning, no enclave — the shipping core) and **Vault Mode** (opt-in 2-of-2 multisig with a
+Nautilus TEE co-signer — the stretch differentiator).
+
+## Current state (what's DONE)
+- **Phase 1 (submittable MVP) — COMPLETE, on main.**
+  - `app/src/lib/safe-wallet-demo.test.ts` — deterministic "blocks a drainer" demo (drainer / sweep /
+    unverified-package / poisoned-address, each asserting exact on-screen copy). App tests 67 → **71**.
+  - README rewritten around the safety pitch; `docs/overflow-pitch.md`, `docs/overflow-demo-script.md`,
+    `docs/overflow-submission.md` written (every demo beat maps to a real command/digest).
+  - Mainnet **read-only proven** (`pnpm test:integration:swap-quote`); publish is approval-gated.
+- **Phase 2 prep — Nitro infra ported (path A), COMPLETE locally.**
+  - Reused the proven AWS-Nitro setup from `~/repo/Aletheia/nautilus-oracle`, reduced to Aegis's single
+    Sui-fullnode leg: `enclave/run.sh`, `enclave/setup-network-proxy.sh`, `enclave/Dockerfile`
+    (now `ENTRYPOINT run.sh` + socat/iproute2 + policy build-args), `enclave/Makefile` (`host-proxy`,
+    `run-enclave-debug`), `enclave/DEPLOY.md` (runbook).
+  - **FINDING (do not relitigate):** Aletheia's existing `attestation.json` is a `--debug-mode` build —
+    PCR0/1/2 all-zero and the enclave key is bound in `user_data`, not the Nitro `public_key` field.
+    It is **NOT** a valid trust anchor for Aegis. Reuse the AWS **box + scripts**, not the doc or
+    Aletheia's off-chain-trust Move registry. Aegis keeps its stronger on-chain
+    `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path. A fresh **non-debug Aegis-app**
+    run is required. (Decode any doc with `python3 /tmp/decode_attestation.py <file>`.)
+
+## Baselines (all green as of 2026-06-05) — run these first to confirm no regression
+```bash
+pnpm test         # shared 20, app 71, extension 8, mobile 7, sponsor 3
+pnpm typecheck    # clean
+pnpm lint         # clean (app 43, shared 21, extension 9, mobile 7, sponsor 4)
+MOVE_HOME=/private/tmp/aegis-move-home-test sui move test   # in move/enclave (1) and move/aegis (12)
+CARGO_HOME=/private/tmp/aegis-cargo cargo test             # in enclave (14)
+```
+
+## What's BLOCKED (not code — needs the user / environment)
+1. **Phase 2 real attestation** → run on the Aletheia Nitro box; the agent has no SSH/aws/nitro-cli/docker.
+   Follow `enclave/DEPLOY.md`:
+   ```bash
+   cd enclave && make build-enclave BUILD_ARGS='--build-arg AEGIS_POLICY_OBJECT_ID=0x…'
+   make run-enclave           # PRODUCTION (not --debug-mode) → real PCRs
+   make host-proxy
+   # bridge inbound, then: curl .../get_attestation > enclave/attestation.json
+   AEGIS_PCRS_JSON=enclave/out/pcr-values.json AEGIS_ATTESTATION_PATH=enclave/attestation.json pnpm register:enclave
+   pnpm test:integration:enclave-cosign && pnpm test:integration:vault-execute && pnpm test:integration:policy-receipts
+   ```
+   Closes the 2 open acceptance tests (PCRs match on-chain `EnclaveConfig`; drain → on-chain `PolicyRejected`).
+2. **T1.2 live `simulate` re-capture** → testnet public RPC returned `RESOURCE_EXHAUSTED` (rate limit) all of
+   2026-06-04/05. Re-run `pnpm test:integration:simulate` when it clears. Prior real net-outflow digest
+   `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` already stands as demo evidence.
+3. **zkLogin / sponsored gas** → set `NEXT_PUBLIC_ENOKI_API_KEY`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`,
+   `ENOKI_PRIVATE_API_KEY`.
+4. **Mainnet publish** (prize-half) → `AEGIS_ALLOW_MAINNET_SPEND=true` + funded mainnet key. See "Mainnet
+   readiness" in `tasklist.md`.
+5. **Submit** → record demo video (`docs/overflow-demo-script.md`), fill the externals in
+   `docs/overflow-submission.md`, make repo public / add judges, submit on DeepSurge.
+
+## File map
+- `tasklist.md` — exhaustive per-task evidence log (digests, commands, dates). The source of truth.
+- `docs/superpowers/plans/2026-06-04-aegis-completion.md` — the 3-phase plan being executed.
+- `docs/specs/aegis-wallet-build-ready-spec.md` — the build-ready spec (§1 non-goals are binding).
+- `docs/overflow-{pitch,demo-script,submission}.md` — judge-facing materials.
+- `enclave/DEPLOY.md` — path-A Nitro deploy runbook.
+- `app/src/lib/transaction-analysis.ts` + `safe-wallet-demo.test.ts` — the safety core + demo backbone.
+- Reference box: `~/repo/Aletheia/nautilus-oracle` (proven Nitro deploy/proxy/register, but DEBUG attestation).
+
+## Guardrails (carry forward — see AGENTS.md)
+- Vault Mode is *"drain-resistant under the AWS-Nitro + reproducible-build trust model"* — **never**
+  "provably un-drainable." TEE + reproducible build, not ZK.
+- Never claim attested co-signing without a real **non-debug** attestation doc on-chain (current enclave
+  evidence is `local-unattested`).
+- Cut scope stays cut: no fiat on-ramp, bridge, advanced consumer trading, or ERC-20 allowance revoker.
+- No browser-automation / live-screenshot claims; shell-render + real testnet digests are the evidence floor.
+- Never commit secrets (`.env`, keystores, `*.pem`, private keys). Aletheia's `.env` / `Aletheia.pem` are off-limits.
