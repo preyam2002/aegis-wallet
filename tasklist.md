@@ -27,9 +27,9 @@ Goal: complete the full spec end-to-end, with every wallet capability in the spe
 - Direct root-script formatting check passed: `./app/node_modules/.bin/biome check scripts/extension-popup-smoke.ts scripts/external-gates-preflight.ts scripts/enclave-cosign-smoke.ts scripts/mobile-bundle-smoke.ts scripts/extension-content-smoke.ts scripts/extension-background-smoke.ts package.json README.md`.
 - Mainnet read-only integration passed: `test:integration:swap-quote` returned a zero-wallet-fee Aftermath route for SUI -> USDC.e via Bluefin/Cetus.
 - External gate preflight passed as a diagnostic command: `pnpm preflight:external-gates` exited 0 and reported current blockers for Nitro/Marlin tooling, Enoki/OAuth env, testnet staking balance, mainnet spend approval, and browser/native-device proof.
-- Feature parity contract update: `app/src/lib/wallet-parity.ts` tracks Slush/MetaMask/Phantom-style wallet capabilities as 7 implemented, 7 externally gated, and 0 planned. Fiat on-ramp, bridge/multichain, and advanced consumer trading are now explicit provider-gated capability models instead of silent planned gaps, and `WalletDashboard` renders the parity map plus on-ramp, bridge, and advanced-trading panels. Evidence: `pnpm --filter @aegis/app test src/lib/consumer-capabilities.test.ts src/lib/wallet-parity.test.ts src/components/WalletDashboard.test.tsx`, `pnpm --filter @aegis/app test` (70 tests across 18 files), `pnpm --filter @aegis/app typecheck`, `pnpm --filter @aegis/app lint`, and `pnpm --filter @aegis/app build` passed on 2026-06-03.
+- Feature parity contract update: `app/src/lib/wallet-parity.ts` tracks the spec-owned Slush/MetaMask/Phantom-style wallet capabilities as 7 implemented, 4 externally gated, and 0 planned across 11 rows. Fiat on-ramp, cross-chain bridge, and advanced consumer trading were removed as spec-excluded scope drift. Evidence refreshed on 2026-06-04: `pnpm --filter @aegis/app test src/lib/wallet-parity.test.ts src/components/WalletDashboard.test.tsx` passed (4 tests) and `pnpm --filter @aegis/app typecheck` passed.
 - Localnet staking execution passed after public testnet funding remained rate-limited. Evidence: disposable localnet at `/private/tmp/aegis-sui-localnet-1780481903` with `sui start --network.config ... --with-faucet --fullnode-rpc-port 9000`; `pnpm test:integration:localnet-stake` executed native stake digest `2EadWPsLCDytqzNef43wcocHdenvHYBxRjnMhoZH9Vs7` for `1000000000` MIST to validator `0x2e0c...6a79`.
-- Browser proof attempt: Next dev server served `/` with HTTP 200 and server-rendered HTML containing `Aegis Safe Wallet`, `Wallet parity`, `Pre-sign simulation`, `Cross-chain bridge`, `Network settings`, `Mainnet spending requires explicit approval`, `Security settings`, `Auto-lock`, `Seed export`, `Fiat on-ramp`, `Provider KYC handoff`, `Bridge routes`, `Sui to Ethereum`, `Advanced trading`, `Perps`, `sui://pay`, `Vault Mode`, `7` gated, and `0` planned. The Codex in-app Browser was not exposed through tool discovery, Playwright MCP failed with `Transport closed`, and prior Computer Use `list_apps` timed out after 120s; no live browser screenshot is claimed.
+- Browser proof attempt: Current shell-render evidence covers `Aegis Safe Wallet`, `Wallet parity`, `Pre-sign simulation`, `Network settings`, `Mainnet spending requires explicit approval`, `Security settings`, `Auto-lock`, `sui://pay`, `Vault Mode`, and `0` planned. Browser/native proof remains a gate: browser automation is approved for this run when `AEGIS_ALLOW_BROWSER_AUTOMATION=true`, but the available Playwright MCP previously failed with `Transport closed` and no live browser screenshot is claimed.
 
 ## Phase 0 - Scaffold And Enclave Feasibility
 
@@ -59,7 +59,7 @@ Goal: complete the full spec end-to-end, with every wallet capability in the spe
 - T1.6 localnet staking execution update: added `pnpm test:integration:localnet-stake`, which uses `SuiJsonRpcClient` against localnet JSON-RPC plus the local faucet. It passed on 2026-06-03 against a disposable localnet, staking `1000000000` MIST with digest `2EadWPsLCDytqzNef43wcocHdenvHYBxRjnMhoZH9Vs7`. Public testnet staking remains separately blocked by the active testnet address balance and faucet rate limit.
 - T1.6 parity update: added `app/src/lib/wallet-parity.ts` and dashboard parity rendering for Slush/MetaMask/Phantom-style capability families. Current explicit status is 7 implemented, 7 externally gated, and 0 planned, so the app does not silently claim live MetaMask/Phantom parity while still exposing each target surface.
 - T1.6 settings parity update: added `app/src/lib/network-settings.ts` with testnet/localnet/mainnet network configuration and mainnet spend guardrails, plus `app/src/lib/security-settings.ts` with auto-lock, biometric high-risk approval, simulation alerts, poisoning protection, dust hiding, and seed-export policy. `WalletDashboard` now renders `Network settings` and `Security settings` panels. Evidence: `pnpm --filter @aegis/app test src/lib/network-settings.test.ts src/lib/security-settings.test.ts src/lib/wallet-parity.test.ts src/components/WalletDashboard.test.tsx`, `pnpm --filter @aegis/app test`, `pnpm --filter @aegis/app typecheck`, `pnpm --filter @aegis/app lint`, and `pnpm --filter @aegis/app build` passed on 2026-06-03.
-- T1.6 consumer parity update: added `app/src/lib/consumer-capabilities.ts` with fiat on-ramp provider/KYC gates for Transak, Banxa, and MoonPay; bridge intent and route gates for Sui, Ethereum, and Solana through Sui Bridge, Wormhole, and CCTP; and advanced consumer-trading gates for perps, prediction markets, tokenized stocks, wallet chat, and cash card. `WalletDashboard` now renders `Fiat on-ramp`, `Bridge routes`, and `Advanced trading` panels. Evidence: the RED run failed on missing `consumer-capabilities`, old 7/4/3 parity, and absent dashboard panels; after implementation `pnpm --filter @aegis/app test src/lib/consumer-capabilities.test.ts src/lib/wallet-parity.test.ts src/components/WalletDashboard.test.tsx`, full `pnpm --filter @aegis/app test` (70 tests), `pnpm --filter @aegis/app typecheck`, `pnpm --filter @aegis/app lint`, and `pnpm --filter @aegis/app build` passed on 2026-06-03.
+- T1.6 consumer parity correction: the prior consumer on-ramp/bridge/advanced-trading slice was removed because the build-ready spec excludes those surfaces from v1. Current parity is 11 spec-owned rows only; see "Scope correction — 2026-06-03" below.
 - [ ] T1.7 zkLogin + Enoki onboarding and sponsored transaction flow are implemented and tested. Partial evidence: Enoki 1.0.8 API shapes verified from installed `.d.mts`; `app/src/lib/onboarding.ts` now builds wallet registration options for configured OAuth provider client IDs, builds the verified `createSponsoredTransaction` payload, and wraps `createSponsoredTransaction`/`executeSponsoredTransaction` through an injectable control-plane client. `sponsor/src/index.ts` implements the private-key Enoki control plane from the spec (`ENOKI_PRIVATE_API_KEY`, backend-owned allowed addresses/Move-call targets, `createSponsoredTransaction`, `executeSponsoredTransaction`) without putting the private key in the app; `pnpm --filter @aegis/sponsor test`, `typecheck`, and `lint` passed on 2026-06-03. `pnpm --filter @aegis/app test src/lib/onboarding.test.ts` (5 tests), `pnpm --filter @aegis/app typecheck`, and `pnpm --filter @aegis/app lint` passed on 2026-06-03. Live zkLogin stable address and sponsored tx remain blocked because no Enoki API key or OAuth client IDs are set.
 - [ ] T1.8 Deploy Aegis Move bits to mainnet after testnet validation. Partial evidence: current Aegis package was upgraded on testnet to version 2 at `0x204b7722d8ffd03f948f6edbe390c187c8056cb731aadffcd42f9e8ae787131b`, digest `BWT8RuFiZTa7VTZakqHHoYDBu3gww5MhfDfjAS5UHVqo`, with modules `attestation`, `policy`, `recovery`, and `subaccount`; because Seal requires the first-version package namespace, a fresh first-version testnet package with all modules was also published at `0x599af3fd203d2659af114218d6c61be7ed275715da6d720cb0dc6ce043d1ef6b`, digest `H4Tt7VTDwwmbR83RdzzaRAXG3b85Bj8jpAXeY4UAUpSQ`. Mainnet deploy remains open and should require explicit approval because it spends real mainnet SUI.
 
@@ -103,10 +103,98 @@ Goal: complete the full spec end-to-end, with every wallet capability in the spe
 - [x] Move: `sui move test` green for Aegis and copied enclave. Evidence: `MOVE_HOME=/private/tmp/aegis-move-home-test sui move test` passed in `move/enclave` (1 test) and `move/aegis` (12 tests) on 2026-06-03.
 - [x] Recovery: Seal+Shamir guardian flow encrypts and decrypts through a live Seal key server. Evidence: `pnpm test:integration:seal-recovery` decrypted a 25-byte guardian share for RecoveryConfig `0xa3dab059719dc74d19261904d8f2509e0eb2a0eb8ae84d56398ae53593e12f42` on testnet.
 - [ ] Deploy: testnet then mainnet deploy, receipts visible on Explorer.
-- [x] UX evidence: shell-rendered dashboard proof is current, and live browser proof is not claimed. Evidence: `app/src/components/WalletDashboard.test.tsx` verifies the core wallet tasks plus the parity map, settings panels, and consumer-parity panels; HTTP render of `http://localhost:3030` returned 200 and included the expected wallet/parity/safety/network/security/on-ramp/bridge/advanced-trading text. Browser automation was re-enabled by the user, but the in-app Browser was not exposed through tool discovery, Playwright MCP transport closed, and Computer Use timed out, so no browser screenshot or real extension load proof is claimed.
+- [x] UX evidence: shell-rendered dashboard proof is current, and live browser proof is not claimed. Evidence: `app/src/components/WalletDashboard.test.tsx` verifies the core wallet tasks plus the parity map and settings panels. Browser automation was re-enabled by the user, and `AEGIS_ALLOW_BROWSER_AUTOMATION=true pnpm preflight:external-gates` now reports browser automation approved, but the available Playwright MCP previously returned `Transport closed`, so no browser screenshot or real extension load proof is claimed.
 
 ## Scope correction — 2026-06-03 (P1 cleanup)
 - Removed the spec-excluded consumer-parity scope drift. The spec §1 non-goals exclude fiat on-ramp, cross-chain bridge, and advanced consumer trading (perps/prediction markets/tokenized stocks/chat/cash card); these had been added as `app/src/lib/consumer-capabilities.ts` plus `Fiat on-ramp` / `Bridge routes` / `Advanced trading` dashboard panels and were never product surfaces.
 - Deleted `app/src/lib/consumer-capabilities.ts` and `app/src/lib/consumer-capabilities.test.ts`; removed the three `WalletDashboard` panels, their `chainLabel`/model imports, and the now-dead `.consumerPanel`/`.bridgePanel`/`.advancedPanel` CSS selectors.
 - Trimmed `app/src/lib/wallet-parity.ts` from 14 rows to 11 (dropped `fiat-onramp`, `bridge-multichain`, `advanced-consumer-trading`). New honest count: **7 implemented / 4 gated / 0 planned** (gated = swap-stake-defi, dapp-extension-mobile, passkey-zklogin-sponsored, vault-recovery). Earlier "7 implemented / 7 gated" lines above are superseded.
 - Verified after removal: `pnpm --filter @aegis/app typecheck`, `pnpm --filter @aegis/app lint` (42 files, clean), and `pnpm --filter @aegis/app test` (67 tests across 17 files) all pass on 2026-06-03.
+
+## 2026-06-04 — Overflow learnings & completion plan
+
+Decisions from the Sui Overflow 2026 strategy session. Execution plan: `docs/superpowers/plans/2026-06-04-aegis-completion.md`. Overflow deadline June 21 2026 PT, DeepSurge portal; ~50% of judging is real-world application; half the prize unlocks on mainnet deploy.
+
+- [ ] **Track = DeFi & Payments.** Submit Aegis here, leading with the **Safe Wallet** (the done, no-TEE half). Agentic Web is the alternative track ONLY if Vault Mode (attested co-signer) becomes the headline — but that lane (agent wallets/guardrails) is the most crowded, so DeFi & Payments + Safe Wallet hero is the pick. Do not chase Agentic Web by default.
+- [ ] **One-line pitch:** "the Sui wallet that won't let you get drained" — a nutrition label + bouncer for every transaction. Hero = pre-sign plain-English simulation, risk scanner (unknown recipient / sweep / new-or-unverified package / curated drainer list), and address-poisoning protection.
+- [ ] **Safe Wallet is the MVP and is essentially demo-ready.** 67 vitest across 17 files green, real testnet digests, passkey tx executed. Phase 1 is to LOCK the submission: a live "block a drainer / poisoned-address tx" demo, README/pitch rewrite around safety, and confirm which surfaces are mainnet-deployable for the prize half (mainnet read-only is acceptable).
+- [ ] **TEEs are now OK (reversal).** Vault Mode — the attested co-signer that enforces policy and emits on-chain `PolicyPassed`/`PolicyRejected` — is now a real differentiator worth finishing, not just a gated roadmap item. The parked P0 (T0.3/T0.4) is back IN SCOPE as a **Phase 2 stretch goal**: stand up a REAL attested Nitro/Marlin enclave, register PCR/pubkey on-chain, prove a real attested 2-of-2 multisig that refuses a seeded drain and emits an on-chain `PolicyRejected`.
+- [ ] **Vault Mode attestation: pick A vs B (decision gate before any Phase 2 enclave work).**
+  - **(A) Replicate the user's existing "Aletheia" AWS Nitro box** — vanilla Nautilus ed25519 + own `EnclaveConfig`, matches the current spec/Move/`enclave/`, no Move rework. Downside: the user called the AWS setup "horrible." User can point Codex at the Aletheia repo/scripts/instance.
+  - **(B) Marlin Oyster** — managed/Docker, no AWS, but secp256k1 + PCR16 + its own registry ⇒ Move + multisig rework.
+  - Default lean = **(A)** to preserve the existing ed25519/Nautilus code path; do not start enclave provisioning until this is decided. Codex cannot SSH/AWS-login/Marlin-provision itself — this is an external gate that needs the user.
+- [ ] **Two-project rule is UNVERIFIED.** One project = one track is confirmed. Whether a SOLO participant can submit TWO distinct projects to two tracks (Aegis as a second entry alongside the user's flagship `predict-studio` on the DeepBook track) is NOT confirmed — **verify in the Overflow Discord / handbook before relying on a dual submission.** If only one entry is allowed, this is a prioritization decision, not an Aegis code problem.
+- [ ] **Keep cut scope cut.** No fiat on-ramp, no cross-chain bridge, no advanced consumer trading (perps/prediction markets/tokenized stocks/chat/cash card). These were removed on 2026-06-03 as spec §1 non-goals; do not re-introduce them for the demo.
+- [ ] **Do not fake Vault Mode.** Local-enclave evidence (`pnpm test:integration:vault-execute`) is valid for dev/testnet demos but is explicitly NOT Nitro/Marlin proof. If the real-attestation spike does not land by the deadline, ship the Safe Wallet (MVP) and present Vault Mode honestly as local-enclave + the ready Docker/EIF/register path.
+- [ ] **Wallet lane is crowded** (near Slush, the official Sui wallet). The entire pitch must be SAFETY, not feature parity.
+
+## Mainnet readiness — 2026-06-05 (T1.5)
+
+Half the Overflow prize unlocks on mainnet deploy. This enumerates exactly what can go to mainnet WITHOUT spending unapproved funds, and the explicit approval gate for what does.
+
+**Deployable / proven without spend (submitted state is acceptable here):**
+- **Mainnet read-only swap routing — PROVEN.** `pnpm test:integration:swap-quote` exited 0 on 2026-06-05 against mainnet: `aftermath` route, `walletFeeBps: 0`, `10000000` MIST SUI → `7620` USDC.e (`0x5d4b...a93bf::coin::COIN`) via protocols `Obric`/`Bluefin`, `routeCount: 1`. This is a live mainnet read path and needs no funding.
+- **App pointed at a mainnet fullnode read-only** — portfolio/activity/simulation read paths use `client.core.*` and work against a mainnet `baseUrl` with no signing. No spend.
+- **Move tests green** for `move/aegis` (12) and `move/enclave` (1) — the packages compile and pass unit tests, ready to publish once approved.
+
+**Approval-gated (spends real mainnet SUI — DO NOT run without `AEGIS_ALLOW_MAINNET_SPEND=true` and a funded mainnet key):**
+- **Publish `move/aegis` to mainnet.** The `aegis` package depends on `enclave = { local = "../enclave" }`, so publish order is enclave first, then point `aegis` at the published enclave address, then publish `aegis`:
+  ```bash
+  sui client switch --env mainnet            # requires a funded mainnet address
+  cd move/enclave && sui client publish      # publish the vendored Nautilus enclave package first
+  # set enclave published-at in move/enclave/Move.toml, then:
+  cd ../aegis && sui client publish          # publishes aegis (policy/recovery/subaccount/attestation)
+  ```
+  Gas is auto-budgeted by the current Sui CLI; this spends real SUI and is the prize-half action. It is intentionally NOT scripted to avoid an accidental spend.
+- **Live mainnet swap execution** — same gate; a real swap moves real funds. Read-only quoting (above) is the submitted state until approved.
+
+**Preflight gate of record:** `pnpm preflight:external-gates` reports `gate: "mainnet-deploy-and-swap-execution"`, `ready: false`, `approvalEnv: "AEGIS_ALLOW_MAINNET_SPEND=true"` (confirmed 2026-06-05). Until the user approves and funds a mainnet key, **mainnet read-only is the accepted submitted state** and the testnet deploys (T1.8 digests above) stand as the on-chain evidence.
+
+## Demo evidence — 2026-06-05 (T1.2, live re-capture RPC-blocked)
+
+The demo needs a real testnet transaction whose simulation shows a net-outflow / object-leaving diff (the thing a drainer does). Prior captured on-chain evidence stands for this:
+
+- **Real net-outflow digest:** native send `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` (2026-06-03), verified on-chain balance changes: recipient `+1000` MIST, sender `-1998880` MIST. This is a confirmed testnet net-outflow diff — the SimSummary `sends`/`objectsLeaving` shape the signing screen renders.
+- **SimSummary shape (for the demo overlay):** `sends: [{ coinType: 0x2::sui::SUI, amount: "-1998880" /* incl. gas */, to: 0x38e8…9212 }]`, `objectsLeaving: []`, `risk: [unknown-recipient (this recipient is not in the address book)]`, `gas: ~1.9M MIST`.
+- **Live re-verify BLOCKED:** `pnpm test:integration:simulate` returned `RESOURCE_EXHAUSTED` (gRPC 429) from the public testnet fullnode `SimulateTransaction` on every attempt 2026-06-04/05 — IP rate limit, not a code regression (V1/V2/V3 all green). Re-run `pnpm test:integration:simulate` when the public RPC clears to capture a fresh simulate-only diff; the recorded send digest above already provides on-chain demo proof in the meantime.
+
+## Phase 2 runbook — 2026-06-05 (pre-hardware prep done; gated on external enclave)
+
+Local pre-hardware checks for Phase 2 are GREEN and there is **no remaining local code work** — the attestation/register pipeline is fully wired and waits only on real PCRs + a real attestation document from an actual Nitro/Marlin enclave.
+
+- `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave` — 14 pass (incl. the Nitro `public_key`-binding test).
+- `make -n build-enclave` (dry-run) is clean and uses the **production** path: `docker build` → `nitro-cli build-enclave --output-file out/aegis-enclave.eif` → `make pcrs` (extracts PCR0/1/2, asserts each is 96 hex chars / 48-byte SHA-384, writes `out/pcr-values.json`). NOT `run-debug` (which yields all-zero PCRs).
+- `scripts/register-nautilus-enclave.ts` (`pnpm register:enclave`) reads PCRs from `AEGIS_PCR0/1/2` or `AEGIS_PCRS_JSON` (the `out/pcr-values.json` shape), and the attestation doc from `AEGIS_ATTESTATION_BASE64` or `AEGIS_ATTESTATION_PATH`; it calls `aegis::attestation::create_enclave_config` then `0x2::nitro_attestation::load_nitro_attestation` + `enclave::register_enclave<AEGIS>`. Testnet defaults for package / enclave-package / Nautilus-cap ids are baked in.
+
+**Once the external gate is open (user provides a Nitro/Marlin enclave), the sequence is:**
+```bash
+cd enclave && make build-enclave          # on the Nitro host: produces out/aegis-enclave.eif + out/pcr-values.json
+make run-enclave                           # boot the enclave; GET /get_attestation -> attestation doc (ed25519 pubkey in public_key)
+# save the attestation doc JSON locally, then from repo root:
+AEGIS_PCRS_JSON=enclave/out/pcr-values.json AEGIS_ATTESTATION_PATH=<doc.json> pnpm register:enclave
+# then point the vault executor at the attested enclave (mode must be "nitro-attested"):
+pnpm test:integration:enclave-cosign       # confirms /get_attestation mode + matching pubkey
+pnpm test:integration:vault-execute        # attested 2-of-2 benign exec + seeded-drain refusal
+pnpm test:integration:policy-receipts      # resolves the live on-chain PolicyRejected digest
+```
+
+**BLOCKING DECISION (T2.0) before any of the above:** pick **(A) replicate the Aletheia AWS Nitro box** (vanilla Nautilus ed25519 + own `EnclaveConfig` — matches all current code, no rework; default lean) or **(B) Marlin Oyster** (managed/Docker, no AWS, but secp256k1 + PCR16 + own registry ⇒ Move + multisig rework). `docker`, `nitro-cli`, `aws`, `oyster`, `marlin` are not installed locally; the agent cannot SSH/AWS-login/provision — this needs the user.
+
+## T2.0 attestation decision + Aletheia reuse — 2026-06-05
+
+**Attestation decision: PATH A (replicate the Aletheia AWS Nitro box).** User chose A and pointed at the local `~/repo/Aletheia` repo ("use those"). No Move/multisig rework; Aegis keeps its stronger on-chain path.
+
+**Key finding — Aletheia's existing attestation is NOT a reusable trust anchor for Aegis.** Decoded `~/repo/Aletheia/attestation.json` (minimal CBOR/COSE decoder, `/tmp/decode_attestation.py`):
+- PCR0/1/2 are **all-zero** → it is a `--debug-mode` build (`nautilus-oracle` Makefile `run-enclave` uses `--debug-mode`). Zero PCRs measure nothing.
+- The enclave ed25519 pubkey (`9f29396fc27d8ea5…`) is bound in **`user_data`**, and the standard Nitro **`public_key` field is null**. Aegis's `register_enclave` stores `document.public_key()` — so Aletheia's doc would register an empty key. Aletheia compensated with a custom `nautilus_oracle::register_enclave_key(pubkey, doc, adminCap)` that trusts attestation **off-chain** (weaker). Aegis keeps the stronger on-chain `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path.
+- Conclusion: reuse Aletheia's **AWS box + proven deploy/proxy scripts**, NOT its attestation doc or Move registry. A fresh **non-debug Aegis-app** run is required.
+
+**Reusable infra ported into `enclave/` (Sui-only, adapted from `~/repo/Aletheia/nautilus-oracle`):**
+- `enclave/run.sh` — in-enclave init: loopback/DNS, Sui outbound (`127.0.0.4:443 → vsock:3:8003`), inbound (`vsock:3000 → tcp:localhost:3000`), then exec `aegis-enclave`.
+- `enclave/setup-network-proxy.sh` — host systemd `socat VSOCK-LISTEN:8003 → fullnode.testnet.sui.io:443` (dropped Aletheia's OpenAI/Walrus legs).
+- `enclave/Dockerfile` — installs `socat`+`iproute2`, bakes policy as build-args (→ part of PCR measurement), `ENTRYPOINT run.sh` (was the bare binary, which could not network inside Nitro).
+- `enclave/Makefile` — `host-proxy` target, `BUILD_ARGS` pass-through, and a clearly-labelled `run-enclave-debug` (never register a debug enclave). Production `run-enclave` already had no `--debug-mode`.
+- `enclave/DEPLOY.md` — one-page path-A runbook (build → run → proxy → fetch `/get_attestation` → `pnpm register:enclave` → prove attested).
+- Verified: `CARGO_HOME=/private/tmp/aegis-cargo cargo test` 14 pass; `make -n build-enclave` + `sh -n`/`bash -n` on both scripts clean (2026-06-05).
+
+**Still external (needs the user on the Nitro host):** run `make build-enclave` + `make run-enclave` (production) + `make host-proxy` on the Aletheia box, then `pnpm register:enclave` against the real non-debug attestation. The agent cannot SSH/AWS/nitro-cli/docker locally.
