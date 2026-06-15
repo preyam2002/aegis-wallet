@@ -1,5 +1,6 @@
 pub mod attestation;
 pub mod cosign;
+pub mod ledger;
 pub mod policy;
 pub mod policy_source;
 pub mod simulation;
@@ -99,9 +100,15 @@ mod simulation_tests {
 mod cosign_tests {
     use crate::{
         cosign::{co_sign_transaction, CoSignRequest, CoSignResponse},
+        ledger::SpendLedger,
         policy::{PolicyRequest, VaultPolicy},
         sui_signature::AegisSigningKey,
     };
+    use std::time::{Duration, SystemTime};
+
+    fn now() -> SystemTime {
+        SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000)
+    }
 
     fn policy() -> VaultPolicy {
         VaultPolicy {
@@ -114,7 +121,7 @@ mod cosign_tests {
         }
     }
 
-    fn request(recipient: &str) -> CoSignRequest {
+    fn request(recipient: &str, tx_digest: &str) -> CoSignRequest {
         CoSignRequest {
             tx_bytes: base64::Engine::encode(
                 &base64::engine::general_purpose::STANDARD,
@@ -123,7 +130,7 @@ mod cosign_tests {
             user_sig: "user-partial".to_string(),
             vault_address: "0xvault".to_string(),
             policy_request: Some(PolicyRequest {
-                tx_digest: "demo".to_string(),
+                tx_digest: tx_digest.to_string(),
                 recipient: recipient.to_string(),
                 package: "0x2".to_string(),
                 net_outflow_mist: 1_000_000_000,
@@ -134,8 +141,15 @@ mod cosign_tests {
     #[test]
     fn co_signs_when_policy_passes() {
         let key = AegisSigningKey::from_seed([7u8; 32]);
+        let mut ledger = SpendLedger::new();
 
-        let response = co_sign_transaction(&policy(), &key, &request("0xfriend"));
+        let response = co_sign_transaction(
+            &policy(),
+            &key,
+            &request("0xfriend", "demo"),
+            &mut ledger,
+            now(),
+        );
 
         match response {
             CoSignResponse::Signed { enclave_sig, .. } => {
@@ -153,8 +167,15 @@ mod cosign_tests {
     #[test]
     fn refuses_when_policy_fails() {
         let key = AegisSigningKey::from_seed([7u8; 32]);
+        let mut ledger = SpendLedger::new();
 
-        let response = co_sign_transaction(&policy(), &key, &request("0xattacker"));
+        let response = co_sign_transaction(
+            &policy(),
+            &key,
+            &request("0xattacker", "drain"),
+            &mut ledger,
+            now(),
+        );
 
         match response {
             CoSignResponse::Refused { reason, .. } => {
@@ -167,16 +188,60 @@ mod cosign_tests {
     #[test]
     fn refuses_when_server_side_policy_facts_are_missing() {
         let key = AegisSigningKey::from_seed([7u8; 32]);
-        let mut request = request("0xfriend");
+        let mut ledger = SpendLedger::new();
+        let mut request = request("0xfriend", "demo");
         request.policy_request = None;
 
-        let response = co_sign_transaction(&policy(), &key, &request);
+        let response = co_sign_transaction(&policy(), &key, &request, &mut ledger, now());
 
         match response {
             CoSignResponse::Refused { reason, .. } => {
                 assert_eq!(reason, "server-side simulation facts are unavailable");
             }
             CoSignResponse::Signed { .. } => panic!("expected refusal"),
+        }
+    }
+
+    #[test]
+    fn refuses_drip_drain_that_exceeds_rolling_daily_cap_across_transactions() {
+        let key = AegisSigningKey::from_seed([7u8; 32]);
+        let mut ledger = SpendLedger::new();
+        let mut policy = policy();
+        policy.rolling_daily_cap_mist = 1_500_000_000;
+
+        let first = co_sign_transaction(
+            &policy,
+            &key,
+            &request("0xfriend", "tx-1"),
+            &mut ledger,
+            now(),
+        );
+        assert!(matches!(first, CoSignResponse::Signed { .. }));
+
+        let retry = co_sign_transaction(
+            &policy,
+            &key,
+            &request("0xfriend", "tx-1"),
+            &mut ledger,
+            now(),
+        );
+        assert!(
+            matches!(retry, CoSignResponse::Signed { .. }),
+            "re-signing the same digest must not double-count against the cap"
+        );
+
+        let second = co_sign_transaction(
+            &policy,
+            &key,
+            &request("0xfriend", "tx-2"),
+            &mut ledger,
+            now(),
+        );
+        match second {
+            CoSignResponse::Refused { reason, .. } => {
+                assert_eq!(reason, "rolling daily outflow exceeds policy cap");
+            }
+            CoSignResponse::Signed { .. } => panic!("expected rolling daily cap refusal"),
         }
     }
 }

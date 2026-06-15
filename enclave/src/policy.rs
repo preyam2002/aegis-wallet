@@ -27,6 +27,14 @@ pub struct PolicyDecision {
 }
 
 pub fn evaluate_policy(policy: &VaultPolicy, request: &PolicyRequest) -> PolicyDecision {
+    evaluate_policy_with_window_outflow(policy, request, 0)
+}
+
+pub fn evaluate_policy_with_window_outflow(
+    policy: &VaultPolicy,
+    request: &PolicyRequest,
+    prior_window_outflow_mist: u64,
+) -> PolicyDecision {
     if !policy
         .allowed_recipients
         .iter()
@@ -55,6 +63,13 @@ pub fn evaluate_policy(policy: &VaultPolicy, request: &PolicyRequest) -> PolicyD
 
     if outflow_bps > policy.max_outflow_bps {
         return reject(request, "net outflow exceeds policy limit");
+    }
+
+    if policy.rolling_daily_cap_mist > 0
+        && prior_window_outflow_mist.saturating_add(request.net_outflow_mist)
+            > policy.rolling_daily_cap_mist
+    {
+        return reject(request, "rolling daily outflow exceeds policy cap");
     }
 
     PolicyDecision {
@@ -130,6 +145,56 @@ mod tests {
 
         assert!(!decision.allowed);
         assert_eq!(decision.reason, "net outflow exceeds policy limit");
+    }
+
+    #[test]
+    fn rejects_request_when_window_outflow_exceeds_rolling_daily_cap() {
+        let mut policy = base_policy();
+        policy.max_outflow_bps = 10_000;
+        let request = PolicyRequest {
+            tx_digest: "drip".to_string(),
+            recipient: "0xfriend".to_string(),
+            package: "0x2".to_string(),
+            net_outflow_mist: 1_500_000_000,
+        };
+
+        let decision = evaluate_policy_with_window_outflow(&policy, &request, 4_000_000_000);
+
+        assert!(!decision.allowed);
+        assert_eq!(decision.reason, "rolling daily outflow exceeds policy cap");
+    }
+
+    #[test]
+    fn allows_request_within_rolling_daily_cap() {
+        let mut policy = base_policy();
+        policy.max_outflow_bps = 10_000;
+        let request = PolicyRequest {
+            tx_digest: "drip".to_string(),
+            recipient: "0xfriend".to_string(),
+            package: "0x2".to_string(),
+            net_outflow_mist: 1_500_000_000,
+        };
+
+        let decision = evaluate_policy_with_window_outflow(&policy, &request, 3_000_000_000);
+
+        assert!(decision.allowed);
+    }
+
+    #[test]
+    fn rejects_single_tx_above_rolling_daily_cap() {
+        let mut policy = base_policy();
+        policy.max_outflow_bps = 10_000;
+        let request = PolicyRequest {
+            tx_digest: "drain".to_string(),
+            recipient: "0xfriend".to_string(),
+            package: "0x2".to_string(),
+            net_outflow_mist: 6_000_000_000,
+        };
+
+        let decision = evaluate_policy(&policy, &request);
+
+        assert!(!decision.allowed);
+        assert_eq!(decision.reason, "rolling daily outflow exceeds policy cap");
     }
 
     #[test]

@@ -1,8 +1,10 @@
 use base64::{engine::general_purpose::STANDARD, Engine as _};
 use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
 
 use crate::{
-    policy::{evaluate_policy, PolicyRequest, VaultPolicy},
+    ledger::SpendLedger,
+    policy::{evaluate_policy_with_window_outflow, PolicyRequest, VaultPolicy},
     sui_signature::AegisSigningKey,
 };
 
@@ -36,12 +38,17 @@ pub fn co_sign_transaction(
     policy: &VaultPolicy,
     key: &AegisSigningKey,
     request: &CoSignRequest,
+    ledger: &mut SpendLedger,
+    now: SystemTime,
 ) -> CoSignResponse {
     let Some(policy_request) = request.policy_request.as_ref() else {
         return refused("server-side simulation facts are unavailable");
     };
 
-    let decision = evaluate_policy(policy, policy_request);
+    let prior_window_outflow_mist =
+        ledger.outflow_within_window(&request.vault_address, &policy_request.tx_digest, now);
+    let decision =
+        evaluate_policy_with_window_outflow(policy, policy_request, prior_window_outflow_mist);
     if !decision.allowed {
         return refused(&decision.reason);
     }
@@ -49,6 +56,13 @@ pub fn co_sign_transaction(
     let Ok(tx_bytes) = STANDARD.decode(&request.tx_bytes) else {
         return refused("txBytes is not valid base64");
     };
+
+    ledger.record_approval(
+        &request.vault_address,
+        &policy_request.tx_digest,
+        policy_request.net_outflow_mist,
+        now,
+    );
 
     CoSignResponse::Signed {
         ok: true,

@@ -1,6 +1,7 @@
 use aegis_enclave::{
     attestation::nitro_attestation_document,
     cosign::{co_sign_transaction, CoSignRequest, CoSignResponse},
+    ledger::SpendLedger,
     policy::{evaluate_policy, PolicyDecision, PolicyRequest, VaultPolicy},
     policy_source::FullnodePolicySource,
     simulation::FullnodeSimulator,
@@ -12,15 +13,19 @@ use axum::{
     Json, Router,
 };
 use serde::Serialize;
-use std::{net::SocketAddr, sync::Arc};
+use std::{
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+    time::SystemTime,
+};
 
-#[derive(Clone)]
 struct AppState {
     policy: VaultPolicy,
     policy_source: FullnodePolicySource,
     signing_key: AegisSigningKey,
     simulator: FullnodeSimulator,
     allow_caller_policy_requests: bool,
+    spend_ledger: Mutex<SpendLedger>,
 }
 
 #[derive(Serialize)]
@@ -53,7 +58,10 @@ async fn main() {
             total_mist: read_u64("AEGIS_TOTAL_MIST", 10_000_000_000),
         },
         policy_source: FullnodePolicySource::new(
-            read_string("AEGIS_FULLNODE_RPC_URL", "https://fullnode.testnet.sui.io:443"),
+            read_string(
+                "AEGIS_FULLNODE_RPC_URL",
+                "https://fullnode.testnet.sui.io:443",
+            ),
             read_optional_string("AEGIS_POLICY_OBJECT_ID"),
             read_u64("AEGIS_TOTAL_MIST", 10_000_000_000),
         ),
@@ -63,6 +71,7 @@ async fn main() {
             "https://fullnode.testnet.sui.io:443",
         )),
         allow_caller_policy_requests: read_bool("AEGIS_ALLOW_CALLER_POLICY_REQUESTS", false),
+        spend_ledger: Mutex::new(SpendLedger::new()),
     });
 
     let app = Router::new()
@@ -131,8 +140,15 @@ async fn co_sign(
     }
 
     let policy = state.policy_source.load(&state.policy).await;
+    let mut ledger = state.spend_ledger.lock().expect("spend ledger lock");
 
-    Json(co_sign_transaction(&policy, &state.signing_key, &request))
+    Json(co_sign_transaction(
+        &policy,
+        &state.signing_key,
+        &request,
+        &mut ledger,
+        SystemTime::now(),
+    ))
 }
 
 async fn policy_check_and_cosign(
