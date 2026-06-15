@@ -13,6 +13,15 @@ export type PolicyReceipt = {
 	reason: string;
 };
 
+type JsonRpcSuiEvent = {
+	id?: { txDigest?: string; eventSeq?: string };
+	packageId?: string;
+	transactionModule?: string;
+	sender?: string;
+	type?: string;
+	parsedJson?: unknown;
+};
+
 export type PolicyReceiptClient = {
 	core: {
 		getTransaction(options: {
@@ -44,8 +53,38 @@ export const extractPolicyReceipts = (
 				digest,
 				status,
 				policyId: stringifyEventField(event.json.policy_id),
-				txDigest: stringifyVectorField(event.json.tx_digest, "digest"),
-				reason: stringifyVectorField(event.json.reason, "text"),
+				txDigest: stringifyVectorField(event.json.tx_digest, "digest", {
+					decodeBase64Strings: true,
+				}),
+				reason: stringifyVectorField(event.json.reason, "text", {
+					decodeBase64Strings: true,
+				}),
+			},
+		];
+	});
+
+export const extractJsonRpcPolicyReceipts = (
+	events: JsonRpcSuiEvent[],
+): PolicyReceipt[] =>
+	events.flatMap((event) => {
+		if (event.transactionModule !== "policy" || !event.parsedJson) {
+			return [];
+		}
+
+		const status = statusFromEventType(event.type ?? "");
+		const digest = event.id?.txDigest;
+		if (!status || !digest) {
+			return [];
+		}
+
+		const json = event.parsedJson as Record<string, unknown>;
+		return [
+			{
+				digest,
+				status,
+				policyId: stringifyEventField(json.policy_id),
+				txDigest: stringifyVectorField(json.tx_digest, "digest"),
+				reason: stringifyVectorField(json.reason, "text"),
 			},
 		];
 	});
@@ -91,11 +130,16 @@ const stringifyEventField = (value: unknown): string => {
 const stringifyVectorField = (
 	value: unknown,
 	mode: "digest" | "text",
+	{ decodeBase64Strings = false }: { decodeBase64Strings?: boolean } = {},
 ): string => {
 	if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
 		return bytesToDisplay(new Uint8Array(value));
 	}
-	if (typeof value === "string" && shouldDecodeBase64(value, mode)) {
+	if (
+		decodeBase64Strings &&
+		typeof value === "string" &&
+		shouldDecodeBase64(value, mode)
+	) {
 		return bytesToDisplay(base64ToBytes(value));
 	}
 	return typeof value === "string" ? value : "";

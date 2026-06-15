@@ -1,4 +1,4 @@
-import { type RpcFetcher, TESTNET_RPC_URL } from "./testnet-rpc";
+import { type RpcFetcher, suiRpc } from "./testnet-rpc";
 
 export type StakeStatus = "active" | "pending" | "inactive";
 
@@ -24,13 +24,6 @@ export type StakingOverview = {
 	positions: WalletStakePosition[];
 	activeValidatorCount: number;
 	topValidators: ActiveValidatorSummary[];
-};
-
-type JsonRpcResponse<T> = {
-	jsonrpc: "2.0";
-	id: number;
-	result?: T;
-	error?: { code: number; message: string };
 };
 
 type DelegatedStake = {
@@ -65,8 +58,8 @@ export const loadStakingOverview = async (
 	} = {},
 ): Promise<StakingOverview> => {
 	const [delegations, systemState] = await Promise.all([
-		rpc<DelegatedStake[]>("suix_getStakes", [address], fetcher),
-		rpc<SystemState>("suix_getLatestSuiSystemState", [], fetcher),
+		suiRpc<DelegatedStake[]>("suix_getStakes", [address], { fetcher }),
+		suiRpc<SystemState>("suix_getLatestSuiSystemState", [], { fetcher }),
 	]);
 	const validators = normalizeValidators(systemState).sort((left, right) =>
 		compareBigIntStrings(
@@ -138,30 +131,4 @@ const compareBigIntStrings = (left: string, right: string): number => {
 	}
 
 	return 0;
-};
-
-const rpc = async <T>(
-	method: string,
-	params: unknown[],
-	fetcher: RpcFetcher,
-): Promise<T> => {
-	const response = await fetcher(TESTNET_RPC_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-	});
-
-	if (!response.ok) {
-		throw new Error(`Sui RPC ${method} failed with HTTP ${response.status}`);
-	}
-
-	const body = (await response.json()) as JsonRpcResponse<T>;
-	if (body.error) {
-		throw new Error(`Sui RPC ${method} failed: ${body.error.message}`);
-	}
-	if (!body.result) {
-		throw new Error(`Sui RPC ${method} returned no result`);
-	}
-
-	return body.result;
 };

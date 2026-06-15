@@ -1,5 +1,5 @@
 import type { PortfolioTokenBalance } from "./portfolio";
-import { type RpcFetcher, TESTNET_RPC_URL } from "./testnet-rpc";
+import { type RpcFetcher, suiRpc } from "./testnet-rpc";
 
 const SUI_COIN_TYPE = "0x2::sui::SUI";
 const SUI_USD_PRICE_URL =
@@ -113,49 +113,24 @@ type CoinMetadataResponse = {
 	symbol?: string;
 } | null;
 
-type JsonRpcResponse<T> = {
-	jsonrpc: "2.0";
-	id: number;
-	result?: T;
-	error?: { code: number; message: string };
-};
-
 const fetchCoinMetadata = async (
 	coinType: string,
 	fetcher: RpcFetcher,
 ): Promise<TokenMetadata | null> => {
-	const response = await fetcher(TESTNET_RPC_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			jsonrpc: "2.0",
-			id: 1,
-			method: "suix_getCoinMetadata",
-			params: [coinType],
-		}),
-	});
-
-	if (!response.ok) {
-		throw new Error(
-			`Sui RPC suix_getCoinMetadata failed with HTTP ${response.status}`,
-		);
-	}
-
-	const body = (await response.json()) as JsonRpcResponse<CoinMetadataResponse>;
-	if (body.error) {
-		throw new Error(
-			`Sui RPC suix_getCoinMetadata failed: ${body.error.message}`,
-		);
-	}
-	if (!body.result) {
+	const result = await suiRpc<CoinMetadataResponse>(
+		"suix_getCoinMetadata",
+		[coinType],
+		{ fetcher },
+	);
+	if (!result) {
 		return null;
 	}
 
 	return {
 		coinType,
-		decimals: body.result.decimals ?? 0,
-		name: body.result.name ?? coinSymbol(coinType),
-		symbol: body.result.symbol ?? coinSymbol(coinType),
+		decimals: result.decimals ?? 0,
+		name: result.name ?? coinSymbol(coinType),
+		symbol: result.symbol ?? coinSymbol(coinType),
 	};
 };
 

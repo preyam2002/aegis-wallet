@@ -149,7 +149,6 @@ reviewList.addEventListener("click", async (event) => {
 		type: "aegis:resolve-review",
 		requestId,
 		decision,
-		signature: decision === "approve" ? "popup-approved-placeholder" : undefined,
 		reason: decision === "reject" ? "Rejected in Aegis popup." : undefined,
 	});
 	await refreshReviews();
@@ -232,8 +231,17 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 			return true;
 		}
 
-		pendingReviews.delete(request.requestId);
 		if (request.decision === "approve") {
+			if (typeof request.signature !== "string" || !request.signature.length) {
+				sendResponse({
+					type: "aegis:error",
+					origin: "popup",
+					reason: "wallet signer is not available in this generated shell",
+				});
+				return true;
+			}
+
+			pendingReviews.delete(request.requestId);
 			sendResponse({
 				type: "aegis:sign-approved",
 				requestId: request.requestId,
@@ -242,6 +250,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 			return true;
 		}
 
+		pendingReviews.delete(request.requestId);
 		sendResponse({
 			type: "aegis:sign-rejected",
 			requestId: request.requestId,

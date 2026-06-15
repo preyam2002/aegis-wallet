@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { extractPolicyReceipts } from "./policy-receipts";
+import {
+	extractJsonRpcPolicyReceipts,
+	extractPolicyReceipts,
+} from "./policy-receipts";
 
 describe("extractPolicyReceipts", () => {
 	it("extracts PolicyPassed and PolicyRejected events from Sui transaction events", () => {
@@ -91,5 +94,54 @@ describe("extractPolicyReceipts", () => {
 
 		expect(receipts[0]?.txDigest).toBe("0x010203");
 		expect(receipts[0]?.reason).toBe("pass");
+	});
+
+	it("extracts policy receipts from JSON-RPC event query rows", () => {
+		const receipts = extractJsonRpcPolicyReceipts([
+			{
+				id: { txDigest: "event-digest", eventSeq: "0" },
+				packageId: "0x2598",
+				transactionModule: "policy",
+				sender: "0xsender",
+				type: "0x2598::policy::PolicyRejected",
+				parsedJson: {
+					policy_id: "0xa471",
+					tx_digest: [9, 9, 9],
+					reason: [100, 114, 97, 105, 110],
+				},
+			},
+		]);
+
+		expect(receipts).toEqual([
+			{
+				digest: "event-digest",
+				status: "rejected",
+				policyId: "0xa471",
+				txDigest: "0x090909",
+				reason: "drain",
+			},
+		]);
+	});
+
+	it("does not base64-decode JSON-RPC string fields that are already parsed", () => {
+		const receipts = extractJsonRpcPolicyReceipts([
+			{
+				id: { txDigest: "event-digest", eventSeq: "0" },
+				packageId: "0x2598",
+				transactionModule: "policy",
+				sender: "0xsender",
+				type: "0x2598::policy::PolicyPassed",
+				parsedJson: {
+					policy_id: "0xa471",
+					tx_digest: "AQID",
+					reason: "cGFzcw==",
+				},
+			},
+		]);
+
+		expect(receipts[0]).toMatchObject({
+			txDigest: "AQID",
+			reason: "cGFzcw==",
+		});
 	});
 });

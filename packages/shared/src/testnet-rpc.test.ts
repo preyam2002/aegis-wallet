@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSuiBalance, listOwnedObjectTypes } from "./testnet-rpc";
+import { getSuiBalance, listOwnedObjectTypes, suiRpc } from "./testnet-rpc";
 
 describe("testnet rpc helpers", () => {
 	it("requests the SUI balance for an address", async () => {
@@ -41,6 +41,27 @@ describe("testnet rpc helpers", () => {
 			"0x2::coin::Coin<0x2::sui::SUI>",
 			"0xpackage::cap::SessionCap",
 		]);
+	});
+
+	it("retries transient transport failures before returning RPC results", async () => {
+		let attempts = 0;
+		const fetcher: typeof fetch = async () => {
+			attempts += 1;
+			if (attempts === 1) {
+				throw new TypeError("fetch failed");
+			}
+
+			return jsonResponse({
+				jsonrpc: "2.0",
+				id: 1,
+				result: { ok: true },
+			});
+		};
+
+		await expect(
+			suiRpc<{ ok: boolean }>("suix_probe", [], { fetcher, retryDelayMs: 0 }),
+		).resolves.toEqual({ ok: true });
+		expect(attempts).toBe(2);
 	});
 });
 

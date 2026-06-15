@@ -97,7 +97,100 @@ describe("listRecentActivityRows", () => {
 			},
 		]);
 	});
+
+	it("reports wallet movement for the primary coin without summing unrelated coin types", async () => {
+		const rows = await listRecentActivityRows(wallet, {
+			fetcher: fetcherFor({
+				outgoing: [
+					{
+						digest: "swap-digest",
+						timestampMs: "1770000004000",
+						effects: { status: { status: "success" } },
+						balanceChanges: [
+							{
+								owner: { AddressOwner: wallet },
+								coinType: "0x2::sui::SUI",
+								amount: "-1000",
+							},
+							{
+								owner: { AddressOwner: wallet },
+								coinType: "0xpackage::coin::TOKEN",
+								amount: "5000",
+							},
+						],
+					},
+				],
+				incoming: [],
+			}),
+			limit: 3,
+		});
+
+		expect(rows[0]).toMatchObject({
+			digest: "swap-digest",
+			direction: "outbound",
+			amountMist: "1000",
+			coinType: "0x2::sui::SUI",
+			label: "Sent SUI",
+		});
+	});
+
+	it("matches short and full Sui address forms when reading balance changes", async () => {
+		const rows = await listRecentActivityRows("0xabc1", {
+			fetcher: fetcherFor({
+				outgoing: [],
+				incoming: [
+					{
+						digest: "short-address-digest",
+						timestampMs: "1770000005000",
+						effects: { status: { status: "success" } },
+						balanceChanges: [
+							{
+								owner: {
+									AddressOwner:
+										"0x000000000000000000000000000000000000000000000000000000000000abc1",
+								},
+								coinType: "0x2::sui::SUI",
+								amount: "42",
+							},
+						],
+					},
+				],
+			}),
+			limit: 3,
+		});
+
+		expect(rows[0]).toMatchObject({
+			digest: "short-address-digest",
+			direction: "inbound",
+			amountMist: "42",
+			coinType: "0x2::sui::SUI",
+			label: "Received SUI",
+		});
+	});
 });
+
+const fetcherFor =
+	({
+		outgoing,
+		incoming,
+	}: {
+		outgoing: typeof outgoingTransactions;
+		incoming: typeof incomingTransactions;
+	}): typeof fetch =>
+	async (_url, init) => {
+		const request = JSON.parse(String(init?.body)) as {
+			params: [{ filter: { FromAddress?: string; ToAddress?: string } }];
+		};
+		const isFromQuery = Boolean(request.params[0].filter.FromAddress);
+		return new Response(
+			JSON.stringify({
+				jsonrpc: "2.0",
+				id: 1,
+				result: { data: isFromQuery ? outgoing : incoming },
+			}),
+			{ status: 200 },
+		);
+	};
 
 const outgoingTransactions = [
 	{

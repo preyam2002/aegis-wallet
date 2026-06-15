@@ -1,4 +1,4 @@
-import { type RpcFetcher, TESTNET_RPC_URL } from "./testnet-rpc";
+import { type RpcFetcher, suiRpc } from "./testnet-rpc";
 
 export type PortfolioTokenBalance = {
 	coinType: string;
@@ -28,13 +28,6 @@ export type WalletPortfolio = {
 	capabilities: PortfolioObject[];
 	defiPositions: PortfolioObject[];
 	otherObjects: PortfolioObject[];
-};
-
-type JsonRpcResponse<T> = {
-	jsonrpc: "2.0";
-	id: number;
-	result?: T;
-	error?: { code: number; message: string };
 };
 
 type AllBalanceResult = {
@@ -72,10 +65,10 @@ export const listTokenBalances = async (
 		fetcher?: RpcFetcher;
 	} = {},
 ): Promise<PortfolioTokenBalance[]> => {
-	const balances = await rpc<AllBalanceResult>(
+	const balances = await suiRpc<AllBalanceResult>(
 		"suix_getAllBalances",
 		[address],
-		fetcher,
+		{ fetcher },
 	);
 
 	return balances.map((balance) => ({
@@ -96,7 +89,7 @@ export const listOwnedInventory = async (
 		limit?: number;
 	} = {},
 ): Promise<PortfolioObject[]> => {
-	const result = await rpc<OwnedObjectsResult>(
+	const result = await suiRpc<OwnedObjectsResult>(
 		"suix_getOwnedObjects",
 		[
 			address,
@@ -110,7 +103,7 @@ export const listOwnedInventory = async (
 			null,
 			limit,
 		],
-		fetcher,
+		{ fetcher },
 	);
 
 	return result.data
@@ -232,30 +225,4 @@ const typeDisplayName = (type: string): string => {
 	}
 
 	return type.split("::").at(-1)?.replace(/[<>]/g, "") ?? type;
-};
-
-const rpc = async <T>(
-	method: string,
-	params: unknown[],
-	fetcher: RpcFetcher,
-): Promise<T> => {
-	const response = await fetcher(TESTNET_RPC_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-	});
-
-	if (!response.ok) {
-		throw new Error(`Sui RPC ${method} failed with HTTP ${response.status}`);
-	}
-
-	const body = (await response.json()) as JsonRpcResponse<T>;
-	if (body.error) {
-		throw new Error(`Sui RPC ${method} failed: ${body.error.message}`);
-	}
-	if (!body.result) {
-		throw new Error(`Sui RPC ${method} returned no result`);
-	}
-
-	return body.result;
 };

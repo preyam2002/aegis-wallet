@@ -74,6 +74,15 @@ vm.runInNewContext(popupJs, {
 				}
 
 				if (message.type === "aegis:resolve-review") {
+					if (message.decision === "approve" && !message.signature) {
+						callback({
+							type: "aegis:error",
+							origin: "popup",
+							reason: "wallet signer is not available in this generated shell",
+						});
+						return;
+					}
+
 					pendingReviews = pendingReviews.filter(
 						(review) => review.requestId !== message.requestId,
 					);
@@ -138,11 +147,9 @@ assert.deepEqual(runtimeMessages.at(-2), {
 	type: "aegis:resolve-review",
 	requestId: "review-1",
 	decision: "approve",
-	signature: "popup-approved-placeholder",
 });
 assert.deepEqual(runtimeMessages.at(-1), { type: "aegis:list-reviews" });
-assert.equal(pendingReviews.length, 0);
-assert.match(reviewList.innerHTML, /No pending simulations/);
+assert.equal(pendingReviews.length, 1);
 
 console.log(
 	JSON.stringify(
@@ -152,8 +159,8 @@ console.log(
 			checked: [
 				"list-reviews",
 				"render-review-card",
-				"approve-review",
-				"refresh-empty-state",
+				"approve-requires-wallet-signer",
+				"refresh-after-approve-error",
 			],
 		},
 		null,

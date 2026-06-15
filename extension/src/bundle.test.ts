@@ -43,6 +43,9 @@ describe("Aegis extension bundle", () => {
 		);
 		expect(
 			bundle.find((file) => file.path === "popup.js")?.content,
+		).not.toContain("popup-approved-placeholder");
+		expect(
+			bundle.find((file) => file.path === "popup.js")?.content,
 		).not.toContain("card.innerHTML");
 		expect(
 			bundle.find((file) => file.path === "background.js")?.content,
@@ -53,6 +56,9 @@ describe("Aegis extension bundle", () => {
 		expect(
 			bundle.find((file) => file.path === "background.js")?.content,
 		).toContain("pendingReviews");
+		expect(
+			bundle.find((file) => file.path === "background.js")?.content,
+		).toContain("wallet signer is not available in this generated shell");
 		expect(
 			bundle.find((file) => file.path === "content.js")?.content,
 		).toContain("aegis:connect");

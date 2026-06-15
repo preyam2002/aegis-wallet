@@ -33,6 +33,7 @@ const server = spawn("cargo", ["run", "--quiet"], {
 		AEGIS_ALLOW_CALLER_POLICY_REQUESTS: "true",
 		AEGIS_ENCLAVE_PORT: ENCLAVE_PORT,
 		AEGIS_MAX_OUTFLOW_BPS: "2500",
+		AEGIS_ROLLING_DAILY_CAP_MIST: "1500000000",
 		AEGIS_TOTAL_MIST: "10000000000",
 	},
 	stdio: ["ignore", "pipe", "pipe"],
@@ -119,6 +120,45 @@ try {
 		);
 	}
 
+	const retried = await coSign({
+		txBytes: Buffer.from(txBytes).toString("base64"),
+		userSig,
+		vaultAddress: multisig.toSuiAddress(),
+		policyRequest: {
+			txDigest: "demo",
+			recipient: "0xfriend",
+			package: "0x2",
+			netOutflowMist: 1_000_000_000,
+		},
+	});
+
+	if (!retried.ok) {
+		throw new Error(
+			`re-signing the same digest must not consume the rolling cap, got ${JSON.stringify(retried)}`,
+		);
+	}
+
+	const cappedDrip = await coSign({
+		txBytes: Buffer.from(txBytes).toString("base64"),
+		userSig,
+		vaultAddress: multisig.toSuiAddress(),
+		policyRequest: {
+			txDigest: "demo-2",
+			recipient: "0xfriend",
+			package: "0x2",
+			netOutflowMist: 1_000_000_000,
+		},
+	});
+
+	if (
+		cappedDrip.ok ||
+		cappedDrip.reason !== "rolling daily outflow exceeds policy cap"
+	) {
+		throw new Error(
+			`expected rolling daily cap refusal, got ${JSON.stringify(cappedDrip)}`,
+		);
+	}
+
 	console.log(
 		JSON.stringify(
 			{
@@ -127,6 +167,8 @@ try {
 				attestationMode: attestation.mode,
 				combinedSignatureVerified: true,
 				refusalReason: refused.reason,
+				sameDigestRetrySigned: true,
+				rollingDailyCapRefusalReason: cappedDrip.reason,
 			},
 			null,
 			2,

@@ -116,6 +116,29 @@ assert.deepEqual(
 		type: "aegis:resolve-review",
 		requestId: "session:aHR0cHM6Ly9hcHAuZXhhbXBsZQ:1700000000",
 		decision: "approve",
+	}),
+	{
+		type: "aegis:error",
+		origin: "popup",
+		reason: "wallet signer is not available in this generated shell",
+	},
+);
+assert.deepEqual(send({ type: "aegis:list-reviews" }), {
+	type: "aegis:pending-reviews",
+	reviews: [
+		{
+			requestId: "session:aHR0cHM6Ly9hcHAuZXhhbXBsZQ:1700000000",
+			origin: "https://app.example",
+			txBytes: "AQIDBA==",
+			createdAt: 1_700_000_000,
+		},
+	],
+});
+assert.deepEqual(
+	send({
+		type: "aegis:resolve-review",
+		requestId: "session:aHR0cHM6Ly9hcHAuZXhhbXBsZQ:1700000000",
+		decision: "approve",
 		signature: "user-signature",
 	}),
 	{
@@ -136,7 +159,8 @@ console.log(
 				"simulate-and-sign",
 				"list-reviews",
 				"reject-review",
-				"approve-review",
+				"approve-requires-signature",
+				"approve-with-real-signature",
 			],
 		},
 		null,

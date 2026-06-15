@@ -71,7 +71,7 @@ export const walletParityMatrix: WalletParityCapability[] = [
 		capability: "Wallet-standard dApp sessions, extension bridge, mobile shell",
 		aegisStatus: "gated",
 		aegisEvidence:
-			"Generated MV3 extension and Expo shell pass fake-runtime integration tests; real browser/device proof remains open",
+			"Generated MV3 extension and Expo shell pass shell-only integration tests; real browser/device proof remains open",
 		peers: {
 			Slush: "Web app, browser extension, mobile, dApp connection",
 			MetaMask: "Extension, mobile, in-app browser",

@@ -1,4 +1,5 @@
-import { type RpcFetcher, TESTNET_RPC_URL } from "./testnet-rpc";
+import { normalizeSuiAddress } from "@mysten/sui/utils";
+import { type RpcFetcher, suiRpc } from "./testnet-rpc";
 
 export type WalletActivityDirection = "inbound" | "outbound" | "internal";
 export type WalletActivityStatus = "success" | "failure";
@@ -31,13 +32,6 @@ type TransactionBlock = {
 
 type QueryTransactionBlocksResult = {
 	data: TransactionBlock[];
-};
-
-type JsonRpcResponse<T> = {
-	jsonrpc: "2.0";
-	id: number;
-	result?: T;
-	error?: { code: number; message: string };
 };
 
 export const listRecentActivityRows = async (
@@ -83,7 +77,7 @@ const queryTransactionBlocks = ({
 	fetcher: RpcFetcher;
 	limit: number;
 }): Promise<QueryTransactionBlocksResult> =>
-	rpc<QueryTransactionBlocksResult>(
+	suiRpc<QueryTransactionBlocksResult>(
 		"suix_queryTransactionBlocks",
 		[
 			{
@@ -98,7 +92,7 @@ const queryTransactionBlocks = ({
 			limit,
 			true,
 		],
-		fetcher,
+		{ fetcher },
 	);
 
 const activityRowFromBlock = (
@@ -113,10 +107,9 @@ const activityRowFromBlock = (
 		) ?? [];
 	const primaryChange =
 		changes.find((change) => change.coinType === "0x2::sui::SUI") ?? changes[0];
-	const netMist = changes.reduce(
-		(sum, change) => sum + BigInt(change.amount),
-		0n,
-	);
+	const netMist = changes
+		.filter((change) => change.coinType === primaryChange?.coinType)
+		.reduce((sum, change) => sum + BigInt(change.amount), 0n);
 	const direction =
 		netMist > 0n ? "inbound" : netMist < 0n ? "outbound" : "internal";
 
@@ -140,7 +133,8 @@ const ownerAddress = (owner: BalanceChangeOwner): string => {
 	return owner.AddressOwner ?? "";
 };
 
-const normalizeAddress = (address: string): string => address.toLowerCase();
+const normalizeAddress = (address: string): string =>
+	address ? normalizeSuiAddress(address) : "";
 
 const absoluteMist = (amount: bigint): bigint =>
 	amount < 0n ? -amount : amount;
@@ -169,30 +163,4 @@ const coinSymbol = (coinType?: string): string => {
 	}
 
 	return coinType.split("::").at(-1) ?? coinType;
-};
-
-const rpc = async <T>(
-	method: string,
-	params: unknown[],
-	fetcher: RpcFetcher,
-): Promise<T> => {
-	const response = await fetcher(TESTNET_RPC_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-	});
-
-	if (!response.ok) {
-		throw new Error(`Sui RPC ${method} failed with HTTP ${response.status}`);
-	}
-
-	const body = (await response.json()) as JsonRpcResponse<T>;
-	if (body.error) {
-		throw new Error(`Sui RPC ${method} failed: ${body.error.message}`);
-	}
-	if (!body.result) {
-		throw new Error(`Sui RPC ${method} returned no result`);
-	}
-
-	return body.result;
 };
