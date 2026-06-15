@@ -35,14 +35,15 @@ Aegis is a Sui wallet whose differentiator is the transaction-safety layer Sui l
 
 ## Mainnet
 
-- **Read-only proven:** `pnpm test:integration:swap-quote` — zero-wallet-fee route SUI → USDC.e via Obric/Bluefin on mainnet.
+- **Read-only proven:** `pnpm test:integration:swap-quote` — zero-wallet-fee route SUI → USDC.e on mainnet.
 - **Publish:** approval-gated behind `AEGIS_ALLOW_MAINNET_SPEND=true` + a funded mainnet key (spends real SUI). See "Mainnet readiness" in `tasklist.md`. Mainnet read-only is the accepted submitted state until approved.
 
 ## Test evidence (reproducible)
 
-- Unit: `pnpm test` — shared 20, app 71, extension 8, mobile 7, sponsor 3.
+- Unit: `pnpm test` — shared 23, app 73, extension 8, mobile 7, sponsor 3.
 - Move: `MOVE_HOME=/private/tmp/aegis-move-home-test sui move test` — enclave 1, aegis 12.
 - Enclave (Rust): `CARGO_HOME=/private/tmp/aegis-cargo cargo test` — 14.
+- Live integrations refreshed on 2026-06-09: `simulate`, `activity`, `wallet-snapshot`, `portfolio`, `portfolio-value`, `token-metadata`, `staking-overview`, `testnet`, `swap-quote`, and `policy-receipts`.
 - Safety demo backbone: `pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts` — 4 (drainer / sweep / unverified-package / poisoned-address, each with exact user-facing copy).
 
 ## Honest-framing guardrails (do not violate in the submission)

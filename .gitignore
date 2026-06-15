@@ -1,6 +1,7 @@
 node_modules
 .next
 dist
+.pnpm-store/
 target
 move/build
 move/**/build/

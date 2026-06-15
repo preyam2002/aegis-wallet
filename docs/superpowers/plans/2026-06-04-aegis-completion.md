@@ -24,11 +24,11 @@ Take Aegis from a feature-complete prototype to a **submittable Sui Overflow 202
 
 Establish a green baseline so any later regression is attributable. Run from repo root.
 
-- [ ] **V1 — Full unit/typecheck baseline is green.** Run: `pnpm test && pnpm typecheck && pnpm lint`. AC: `pnpm test` reports the known passing counts (shared 20, app 67, extension 8, mobile 7, sponsor 3); typecheck and lint exit 0. Record exact counts.
+- [ ] **V1 — Full unit/typecheck baseline is green.** Run: `pnpm test && pnpm typecheck && pnpm lint`. AC: `pnpm test` reports the known passing counts (shared 23, app 73, extension 8, mobile 7, sponsor 3); typecheck and lint exit 0. Record exact counts.
 - [ ] **V2 — Move tests green.** Run: `MOVE_HOME=/private/tmp/aegis-move-home-test sui move test` in `move/enclave` and `move/aegis`. AC: enclave 1 test, aegis 12 tests pass.
 - [ ] **V3 — Enclave Rust tests green.** Run: `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave`. AC: 14 tests pass, including the Nitro `public_key`-binding test.
 - [ ] **V4 — Live Safe-Wallet read paths still resolve testnet.** Run: `pnpm test:integration:simulate`, `pnpm test:integration:activity`, `pnpm test:integration:wallet-snapshot`. AC: each exits 0 against live testnet (simulate maps a real PTB to `SimSummary`; snapshot returns portfolio/activity/DeFi rows). If the public faucet or RPC is rate-limited, record the exact error and proceed (read paths are not the blocker).
-- [ ] **V5 — External-gate preflight reflects current blockers.** Run: `pnpm preflight:external-gates`. AC: exits 0 as a diagnostic and lists the current Nitro/Marlin, Enoki/OAuth, staking-balance, mainnet-spend, and browser/device gates. This is the source of truth for §4.
+- [ ] **V5 — External-gate preflight reflects current blockers.** Run: `pnpm preflight:external-gates`. AC: exits 0 as a diagnostic and lists the current required Nitro/Marlin, Enoki/OAuth, staking-balance, and mainnet-spend gates; browser/device proof is optional unless explicitly re-enabled. This is the source of truth for §4.
 
 ## 3. Phased atomic tasks
 
@@ -111,7 +111,7 @@ These require human action, real credentials, or hardware Codex has no access to
 - **Do NOT fake Vault Mode.** Local-enclave evidence (`mode:"local-unattested"`, `pnpm test:integration:vault-execute`) is valid for dev/testnet demos but is explicitly NOT Nitro/Marlin proof. If Phase 2 attestation does not land by the deadline, ship the Phase 1 MVP and present Vault Mode honestly as local-enclave + the ready Docker/EIF/register path. Never claim attested co-signing without a real attestation document on-chain.
 - **Do NOT re-introduce cut scope.** Spec §1 non-goals: no fiat on-ramp, no cross-chain bridge, no advanced consumer trading (perps/prediction markets/tokenized stocks/chat/cash card), no ERC-20-style allowance revoker (Sui has no standing allowances). These were removed on 2026-06-03; re-adding them for the demo is a regression.
 - **`make run-debug` yields all-zero PCRs.** Phase 2 must use the production `make run` build path or registration is meaningless.
-- **No browser-automation overclaim.** Playwright MCP previously failed with `Transport closed`; do not claim live browser/extension screenshots. Shell-rendered dashboard proof + real testnet digests are the evidence floor. If a live UI screenshot is needed, ask the user.
+- **No browser-automation overclaim.** The current evidence boundary is shell-rendered dashboard proof plus real testnet/mainnet command output; do not claim live browser/extension screenshots unless the user explicitly re-enables that proof path.
 - **Overclaim language.** Vault Mode is "drain-resistant under the AWS-Nitro + reproducible-build trust model," never "provably un-drainable."
 - **`[VERIFY]` markers in the spec still bind** — especially `@mysten/sui` `client.core.executeTransaction` field names, Seal classic vs gRPC surface, and `load_nitro_attestation` network feature-flag/gas. Do not invent APIs around them.
 

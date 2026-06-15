@@ -2,7 +2,7 @@
 
 > Single resume anchor for the next session (Claude **or** Codex). Read this first,
 > then `tasklist.md` (detailed evidence log) and `docs/superpowers/plans/2026-06-04-aegis-completion.md` (the plan).
-> Last updated: 2026-06-05. `main` @ `e0eb766` (pushed to `github.com/preyam2002/aegis-wallet`, private).
+> Last updated: 2026-06-11. `main` with local completion/design-review changes not yet committed.
 
 ## What Aegis is
 A safety-first Sui wallet. Pitch: *"the Sui wallet that won't let you get drained — a nutrition
@@ -14,10 +14,21 @@ Nautilus TEE co-signer — the stretch differentiator).
 ## Current state (what's DONE)
 - **Phase 1 (submittable MVP) — COMPLETE, on main.**
   - `app/src/lib/safe-wallet-demo.test.ts` — deterministic "blocks a drainer" demo (drainer / sweep /
-    unverified-package / poisoned-address, each asserting exact on-screen copy). App tests 67 → **71**.
+    unverified-package / poisoned-address, each asserting exact on-screen copy). App tests now **73**.
   - README rewritten around the safety pitch; `docs/overflow-pitch.md`, `docs/overflow-demo-script.md`,
     `docs/overflow-submission.md` written (every demo beat maps to a real command/digest).
   - Mainnet **read-only proven** (`pnpm test:integration:swap-quote`); publish is approval-gated.
+  - Live testnet safety/read paths were re-captured on 2026-06-09: `pnpm test:integration:simulate`
+    passed, and activity/portfolio/metadata/staking integrations now share a retrying JSON-RPC helper for
+    transient fullnode transport failures.
+  - Generated MV3 extension shell no longer fabricates approval signatures; unsigned popup approvals are
+    rejected until a real signer supplies a signature.
+- **Rolling-daily-cap enforcement — CLOSED 2026-06-11.** The one genuine gap found by the completeness
+  audit: `rolling_daily_cap_mist` was stored everywhere but never enforced. The enclave now tracks
+  co-sign-approved outflows per vault in a 24h `SpendLedger` (`enclave/src/ledger.rs`) and refuses
+  drip-drains with `rolling daily outflow exceeds policy cap` (digest-deduped, refusals don't consume
+  the window, cap 0 = disabled). Evidence: 23 cargo tests, stateful `pnpm test:integration:enclave-cosign`,
+  live `pnpm test:integration:vault-execute` digest `J42Y7dr1mAPfdzLpTuccVsxgGfUHmHPVKHg9Znrxyhv9`.
 - **Phase 2 prep — Nitro infra ported (path A), COMPLETE locally.**
   - Reused the proven AWS-Nitro setup from `~/repo/Aletheia/nautilus-oracle`, reduced to Aegis's single
     Sui-fullnode leg: `enclave/run.sh`, `enclave/setup-network-proxy.sh`, `enclave/Dockerfile`
@@ -30,13 +41,13 @@ Nautilus TEE co-signer — the stretch differentiator).
     `0x2::nitro_attestation::load_nitro_attestation` + PCR-match path. A fresh **non-debug Aegis-app**
     run is required. (Decode any doc with `python3 scripts/decode-attestation.py <file>` to confirm non-zero PCRs.)
 
-## Baselines (all green as of 2026-06-05) — run these first to confirm no regression
+## Baselines (all green as of 2026-06-11) — run these first to confirm no regression
 ```bash
-pnpm test         # shared 20, app 71, extension 8, mobile 7, sponsor 3
+pnpm test         # shared 23, app 73, extension 8, mobile 7, sponsor 3
 pnpm typecheck    # clean
 pnpm lint         # clean (app 43, shared 21, extension 9, mobile 7, sponsor 4)
 MOVE_HOME=/private/tmp/aegis-move-home-test sui move test   # in move/enclave (1) and move/aegis (12)
-CARGO_HOME=/private/tmp/aegis-cargo cargo test             # in enclave (14)
+CARGO_HOME=/private/tmp/aegis-cargo cargo test             # in enclave (23)
 ```
 
 ## What's BLOCKED (not code — needs the user / environment)
@@ -51,15 +62,16 @@ CARGO_HOME=/private/tmp/aegis-cargo cargo test             # in enclave (14)
    pnpm test:integration:enclave-cosign && pnpm test:integration:vault-execute && pnpm test:integration:policy-receipts
    ```
    Closes the 2 open acceptance tests (PCRs match on-chain `EnclaveConfig`; drain → on-chain `PolicyRejected`).
-2. **T1.2 live `simulate` re-capture** → testnet public RPC returned `RESOURCE_EXHAUSTED` (rate limit) all of
-   2026-06-04/05. Re-run `pnpm test:integration:simulate` when it clears. Prior real net-outflow digest
-   `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` already stands as demo evidence.
-3. **zkLogin / sponsored gas** → set `NEXT_PUBLIC_ENOKI_API_KEY`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`,
+2. **zkLogin / sponsored gas** → set `NEXT_PUBLIC_ENOKI_API_KEY`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`,
    `ENOKI_PRIVATE_API_KEY`.
-4. **Mainnet publish** (prize-half) → `AEGIS_ALLOW_MAINNET_SPEND=true` + funded mainnet key. See "Mainnet
+3. **Mainnet publish** (prize-half) → `AEGIS_ALLOW_MAINNET_SPEND=true` + funded mainnet key. See "Mainnet
    readiness" in `tasklist.md`.
+4. **Optional browser/native-device proof** → no live screenshot/device claim is made unless the user enables
+   and runs that proof path.
 5. **Submit** → record demo video (`docs/overflow-demo-script.md`), fill the externals in
    `docs/overflow-submission.md`, make repo public / add judges, submit on DeepSurge.
+6. **Dual-submission rule** → if also submitting `predict-studio`, confirm with the Overflow portal/Discord
+   whether one solo participant can submit two distinct projects.
 
 ## File map
 - `tasklist.md` — exhaustive per-task evidence log (digests, commands, dates). The source of truth.

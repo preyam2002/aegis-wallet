@@ -22,11 +22,11 @@ with a Nautilus TEE co-signer — the stretch). Sui Overflow 2026, DeFi & Paymen
 ## Commands (run from repo root)
 ```bash
 pnpm install --ignore-scripts
-pnpm test           # shared 20, app 71, extension 8, mobile 7, sponsor 3
+pnpm test           # shared 23, app 73, extension 8, mobile 7, sponsor 3
 pnpm typecheck
 pnpm lint
 MOVE_HOME=/private/tmp/aegis-move-home-test sui move test    # in move/enclave (1) + move/aegis (12)
-CARGO_HOME=/private/tmp/aegis-cargo cargo test               # in enclave (14)
+CARGO_HOME=/private/tmp/aegis-cargo cargo test               # in enclave (23)
 pnpm preflight:external-gates                                # diagnostic: lists what's blocked
 ```
 Integration tests are `pnpm test:integration:<name>` (see `package.json`); many hit live testnet and

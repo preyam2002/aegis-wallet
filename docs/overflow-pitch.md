@@ -43,6 +43,6 @@ A 2-of-2 native multisig whose second signer is a Nautilus TEE enclave that re-s
 
 ## Status
 
-- **Safe Wallet:** demo-ready. Full unit suite green (shared 20, app 71, extension 8, mobile 7, sponsor 3), real testnet digests, passkey tx executed on testnet, Move tests green (`enclave` 1, `aegis` 12), enclave Rust tests green (14).
+- **Safe Wallet:** demo-ready. Full unit suite green (shared 23, app 73, extension 8, mobile 7, sponsor 3), real testnet digests, passkey tx executed on testnet, Move tests green (`enclave` 1, `aegis` 12), enclave Rust tests green (14).
 - **Mainnet:** read-only proven (swap route via Bluefin/Cetus). `move/aegis` mainnet publish is approval-gated behind `AEGIS_ALLOW_MAINNET_SPEND=true` (the prize-half criterion).
 - **Vault Mode attestation:** stretch, gated on the external AWS-Nitro/Marlin enclave gate.

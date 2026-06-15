@@ -41,7 +41,7 @@ pnpm typecheck
 pnpm lint
 pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts   # the "blocks a drainer" demo backbone
 pnpm --filter @aegis/app dev
-pnpm preflight:external-gates          # diagnostic: lists Nitro/Marlin, Enoki, staking, mainnet, browser gates
+pnpm preflight:external-gates          # diagnostic: lists required Nitro/Marlin, Enoki, staking, mainnet gates; browser/native is optional proof
 pnpm test:integration:simulate         # maps a real testnet PTB into SimSummary
 pnpm test:integration:wallet-snapshot  # live testnet portfolio/activity/DeFi snapshot
 pnpm test:integration:swap-quote       # mainnet read-only, zero-wallet-fee swap route
