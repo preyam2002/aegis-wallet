@@ -22,8 +22,16 @@ const gasUsed = {
 const sendDryRun = (recipient: string): DryRunResponseLike => ({
 	effects: { status: { status: "success" }, gasUsed },
 	balanceChanges: [
-		{ owner: { AddressOwner: SENDER }, coinType: "0x2::sui::SUI", amount: "-1001000" },
-		{ owner: { AddressOwner: recipient }, coinType: "0x2::sui::SUI", amount: "1000" },
+		{
+			owner: { AddressOwner: SENDER },
+			coinType: "0x2::sui::SUI",
+			amount: "-1001000",
+		},
+		{
+			owner: { AddressOwner: recipient },
+			coinType: "0x2::sui::SUI",
+			amount: "1000",
+		},
 	],
 	objectChanges: [],
 });

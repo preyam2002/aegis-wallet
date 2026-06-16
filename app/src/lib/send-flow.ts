@@ -1,9 +1,9 @@
 import { type DryRunResponseLike, summarizeDryRun } from "@aegis/shared";
-import type { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+import type { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import {
-	analyzeSimSummary,
 	type AddressBookEntry,
+	analyzeSimSummary,
 	type TransactionAnalysis,
 	type WalletPolicy,
 } from "./transaction-analysis";
