@@ -4,6 +4,7 @@ import { getSuiBalance } from "@aegis/shared";
 import {
 	Activity,
 	Coins,
+	Landmark,
 	Lock,
 	RefreshCw,
 	Send,
@@ -20,6 +21,7 @@ import {
 import { Onboarding } from "./Onboarding";
 import { ReceivePanel } from "./ReceivePanel";
 import { SendModal } from "./SendModal";
+import { StakeModal } from "./StakeModal";
 import { UnlockScreen } from "./UnlockScreen";
 
 const Gate = ({ children }: { children: ReactNode }) => (
@@ -35,6 +37,7 @@ export const WalletDashboard = () => {
 	const [snapError, setSnapError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [sendOpen, setSendOpen] = useState(false);
+	const [stakeOpen, setStakeOpen] = useState(false);
 
 	const refresh = useCallback(async () => {
 		if (status !== "unlocked" || !activeAddress) {
@@ -117,6 +120,14 @@ export const WalletDashboard = () => {
 							disabled={suiMist === null}
 						>
 							<Send size={16} /> Send
+						</button>
+						<button
+							type="button"
+							className="connectButton"
+							onClick={() => setStakeOpen(true)}
+							disabled={suiMist === null}
+						>
+							<Landmark size={16} /> Stake
 						</button>
 						<button type="button" className="rejectButton" onClick={lock}>
 							<Lock size={16} /> Lock
@@ -208,6 +219,15 @@ export const WalletDashboard = () => {
 					address={address}
 					suiMist={suiMist}
 					onClose={() => setSendOpen(false)}
+					onComplete={() => void refresh()}
+				/>
+			)}
+
+			{stakeOpen && suiMist !== null && (
+				<StakeModal
+					address={address}
+					suiMist={suiMist}
+					onClose={() => setStakeOpen(false)}
 					onComplete={() => void refresh()}
 				/>
 			)}
