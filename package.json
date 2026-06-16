@@ -10,9 +10,6 @@
 		"preflight:external-gates": "tsx scripts/external-gates-preflight.ts",
 		"test": "pnpm -r test",
 		"test:integration:enclave-cosign": "tsx scripts/enclave-cosign-smoke.ts",
-		"test:integration:extension-background": "tsx scripts/extension-background-smoke.ts",
-		"test:integration:extension-content": "tsx scripts/extension-content-smoke.ts",
-		"test:integration:extension-popup": "tsx scripts/extension-popup-smoke.ts",
 		"test:integration:mobile-bundle": "tsx scripts/mobile-bundle-smoke.ts",
 		"test:integration:passkey": "tsx scripts/testnet-passkey-execute.ts",
 		"test:integration:activity": "tsx scripts/testnet-activity-probe.ts",
@@ -43,6 +40,7 @@
 		"@mysten/sui": "2.17.0"
 	},
 	"devDependencies": {
+		"esbuild": "^0.28.1",
 		"tsx": "4.22.4"
 	},
 	"packageManager": "pnpm@11.5.0"

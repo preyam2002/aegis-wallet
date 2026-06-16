@@ -1,7 +1,9 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"lib": ["es2022"],
+		"lib": ["es2022", "dom", "dom.iterable", "webworker"],
+		"types": ["chrome", "node"],
+		"jsx": "react-jsx",
 		"allowJs": false,
 		"skipLibCheck": true,
 		"strict": true,
@@ -11,6 +13,6 @@
 		"resolveJsonModule": true,
 		"isolatedModules": true
 	},
-	"include": ["src/**/*.ts"],
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
 	"exclude": ["node_modules"]
 }

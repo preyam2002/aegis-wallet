@@ -3,8 +3,11 @@
 	"private": true,
 	"version": "0.1.0",
 	"type": "module",
+	"sideEffects": false,
 	"exports": {
-		".": "./src/index.ts"
+		".": "./src/index.ts",
+		"./dry-run-summary": "./src/dry-run-summary.ts",
+		"./sim-summary": "./src/sim-summary.ts"
 	},
 	"scripts": {
 		"lint": "biome check .",

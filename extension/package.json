@@ -13,8 +13,19 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.16",
+		"@types/chrome": "^0.1.43",
 		"@types/node": "22.19.19",
+		"@types/react": "^19.2.15",
+		"@types/react-dom": "^19.2.3",
+		"esbuild": "^0.28.1",
 		"typescript": "5.9.3",
 		"vitest": "2.1.9"
+	},
+	"dependencies": {
+		"@aegis/shared": "workspace:*",
+		"@mysten/sui": "2.17.0",
+		"@mysten/wallet-standard": "^0.20.3",
+		"react": "19.2.0",
+		"react-dom": "19.2.0"
 	}
 }

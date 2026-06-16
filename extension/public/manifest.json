@@ -1,0 +1,32 @@
+{
+	"manifest_version": 3,
+	"name": "Aegis Wallet",
+	"version": "0.1.0",
+	"description": "A safety-first Sui wallet — simulates and risk-scans every transaction before you sign.",
+	"action": {
+		"default_popup": "popup.html",
+		"default_title": "Aegis Wallet"
+	},
+	"background": {
+		"service_worker": "background.js"
+	},
+	"permissions": ["storage"],
+	"host_permissions": [
+		"https://fullnode.testnet.sui.io/*",
+		"https://faucet.testnet.sui.io/*"
+	],
+	"content_scripts": [
+		{
+			"matches": ["http://*/*", "https://*/*"],
+			"js": ["inpage.js"],
+			"run_at": "document_start",
+			"world": "MAIN"
+		},
+		{
+			"matches": ["http://*/*", "https://*/*"],
+			"js": ["content.js"],
+			"run_at": "document_start",
+			"world": "ISOLATED"
+		}
+	]
+}
