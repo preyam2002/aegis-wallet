@@ -1,6 +1,6 @@
 import { type DryRunResponseLike, summarizeDryRun } from "@aegis/shared";
+import type { Signer } from "@mysten/sui/cryptography";
 import type { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
-import type { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import {
 	type AddressBookEntry,
 	analyzeSimSummary,
@@ -94,7 +94,7 @@ export type SendResult = {
 
 export type ExecuteSendInput = {
 	client: SuiJsonRpcClient;
-	signer: Ed25519Keypair;
+	signer: Signer;
 	intent: SendIntent;
 	gasBudgetMist?: bigint;
 };

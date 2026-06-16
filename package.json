@@ -25,6 +25,7 @@
 		"test:integration:seal-vault-recovery": "tsx scripts/testnet-seal-vault-recovery.ts",
 		"test:integration:swap-quote": "tsx scripts/mainnet-swap-quote.ts",
 		"test:integration:send": "tsx scripts/testnet-send-execute.ts",
+		"test:integration:wallet-send": "tsx scripts/wallet-send-smoke.ts",
 		"test:integration:stake": "tsx scripts/testnet-stake-execute.ts",
 		"test:integration:localnet-stake": "tsx scripts/localnet-stake-execute.ts",
 		"test:integration:staking-overview": "tsx scripts/testnet-staking-overview-probe.ts",
