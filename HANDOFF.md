@@ -12,6 +12,22 @@ address-poisoning, no enclave — the shipping core) and **Vault Mode** (opt-in 
 Nautilus TEE co-signer — the stretch differentiator).
 
 ## Current state (what's DONE)
+- **Functional self-custody wallet — BUILT & PROVEN 2026-06-16 (branch `chore/pre-submit-2026-06-15`).**
+  The seeded UI showcase was replaced with a real, usable wallet: local-keypair onboarding (create/import,
+  password-encrypted in-browser keystore via WebCrypto), unlock/lock, live portfolio + USD + activity,
+  receive with a real QR + testnet faucet, a **Send** flow that builds the PTB → live
+  `dryRunTransactionBlock` → runs the risk scanner on the user's *own* tx → blocks critical → signs &
+  broadcasts, and native **Stake**. zkLogin is built but env-gated ("configure Enoki to enable" until the
+  Enoki/Google keys are set). Built on `@mysten/sui/jsonRpc` (`SuiJsonRpcClient`) so it runs in-browser and
+  over JSON-RPC even while the public gRPC simulate quota is throttled. Evidence: `pnpm typecheck` / `lint` /
+  `pnpm --filter @aegis/app build` green; app 81 + shared 28 unit tests; **live send digest
+  `5ysX3brrhVPazq5PteTgRYC4nMKgwfQMxKoCbNQbFm66`** via `pnpm test:integration:wallet-send` (previewSend rated
+  `high`/Unknown-recipient, executeSend `success: true`). Honesty: hot key in browser, testnet-default; no
+  browser-automation/screenshot evidence is claimed (guardrail #4 — user reaffirmed "no playwright").
+  New code: `app/src/lib/{secret-box,sui-browser-client,send-flow,stake-flow,wallet-account,wallet-policy,address-book,amounts,faucet}`
+  + `app/src/components/{Onboarding,UnlockScreen,ReceivePanel,SendModal,StakeModal}` + shared `dry-run-summary`.
+  Design spec: `docs/superpowers/specs/2026-06-16-functional-wallet-design.md`. Removed the seeded
+  `WalletDashboard` showcase + `demo-data.ts`.
 - **Phase 1 (submittable MVP) — COMPLETE, on main.**
   - `app/src/lib/safe-wallet-demo.test.ts` — deterministic "blocks a drainer" demo (drainer / sweep /
     unverified-package / poisoned-address, each asserting exact on-screen copy). App tests now **73**.

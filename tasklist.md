@@ -80,6 +80,34 @@ Goal: complete the full spec end-to-end, with every wallet capability in the spe
 - Live write e2e — 4/8 passed this session: `enclave-cosign` (local-unattested combined signature + recipient refusal + rolling-daily-cap drip refusal), `stake` digest `FKfzEoqcjkPDjK4rGrZxthdHWUw7ZpbggfTWiXf5mnmX`, `vault-recovery-execute` digest `2iMumHS5RY7qdsiTx8VSPymTK14xFuLNJjGgJg3NJpVc`, `seal-recovery` (live guardian-share decrypt).
 - Environmental (not a regression): `passkey`, `send`, `vault-execute`, and `seal-vault-recovery` failed with gRPC `RESOURCE_EXHAUSTED` (`internal` / `SimulateTransaction`) on `sui.rpc.v2.TransactionExecutionService` — the public fullnode's gRPC execute/simulate quota was exhausted by the day's sweep (same failure mode as 2026-06-12; JSON-RPC paths recovered after cooldown, gRPC stayed throttled). Most-recent passing digests stand as evidence: `passkey` `5pR4Pk2xbwrnt9PDsEtjosyZR8hGhn3afZ4t1HbjD3S1` (2026-06-12), `send` `FqnyyAMZyu2miXgwFgdAqrvXcbpeNMLun5KdbkaB85sq` (2026-06-12), `vault-execute` `J42Y7dr1mAPfdzLpTuccVsxgGfUHmHPVKHg9Znrxyhv9` (2026-06-11), `seal-vault-recovery` `7aijaqyecQCz6B3o9jVFLrijzrnk18DKm7yp4zURVPw3` (2026-06-10). Rerun these after a longer cooldown.
 
+## Functional wallet build - 2026-06-16
+
+The seeded `WalletDashboard` showcase (no inputs, no live fetch) was replaced with a real, interactive
+self-custody testnet wallet. The chain logic was already proven; this wired it to an interactive UI plus
+browser key management. Design spec: `docs/superpowers/specs/2026-06-16-functional-wallet-design.md`.
+
+- **Architecture:** browser-direct via `@mysten/sui/jsonRpc` `SuiJsonRpcClient` (`app/src/lib/sui-browser-client.ts`).
+  Reads reuse the existing `fetch`-based shared adapters (`loadLiveWalletSnapshot`, `getSuiBalance`). The send/stake
+  safety preview uses raw `dryRunTransactionBlock` → shared `summarizeDryRun` → existing `analyzeSimSummary` scanner,
+  so it is identical to the unit-tested path and works over JSON-RPC even when the gRPC simulate quota is throttled.
+- **Accounts/keys:** local Ed25519 keypair, secret encrypted with WebCrypto AES-GCM/PBKDF2 (`app/src/lib/secret-box.ts`,
+  renamed off `keystore` to dodge the `**/*keystore*` gitignore), persisted in `localStorage`; create/import, password
+  unlock/lock (`app/src/lib/wallet-account.tsx`). zkLogin built but env-gated (no faked Google flow).
+- **Live surfaces:** onboarding/unlock, portfolio + USD + activity (live), receive with real QR + testnet faucet
+  (`app/src/components/ReceivePanel.tsx`, `app/src/lib/faucet.ts`), **Send** (`SendModal` + `app/src/lib/send-flow.ts`:
+  build PTB → live dry-run → risk scan → block critical → sign+broadcast; remembers recipients via
+  `app/src/lib/address-book.ts`), and native **Stake** (`StakeModal` + `app/src/lib/stake-flow.ts`, validators from
+  `suix_getLatestSuiSystemState`). Default policy in `app/src/lib/wallet-policy.ts` (curated drainer list intentionally
+  empty until a real feed; unknown-recipient/sweep/large-outflow/poisoning all enforced live).
+- **Evidence (shell-only, no browser automation per guardrail #4 / user "no playwright"):** `pnpm test` (shared 28
+  incl. 5 dry-run-summary, app 81 incl. secret-box 4 / send-flow 4 / Onboarding render), `pnpm typecheck`, `pnpm lint`,
+  `pnpm --filter @aegis/app build`, and dev server `curl http://localhost:3030/` → HTTP 200 all passed. **Live send
+  proof:** `pnpm test:integration:wallet-send` — previewSend dry-ran a real PTB (riskLevel `high`, finding
+  `Unknown recipient`, net `-1998880`, gas `1997880`) and executeSend broadcast digest
+  `5ysX3brrhVPazq5PteTgRYC4nMKgwfQMxKoCbNQbFm66` (`success: true`) over JSON-RPC.
+- **Honest scope:** kept-as-status-panel (NOT faked interactive): Vault Mode, guardian recovery, dApp connect, swap
+  execution, sub-accounts. Hot key in browser is testnet-only with an explicit warning; mainnet/zkLogin remain gated.
+
 ## Rolling-daily-cap enforcement closure - 2026-06-11
 
 - Completeness audit found the one genuine implementation gap in the repo: `rolling_daily_cap_mist` was stored end-to-end (Move `Policy`, `set_limits`, on-chain fetch in `enclave/src/policy_source.rs`, env/Docker build-arg plumbing) but never enforced — `evaluate_policy` only checked recipient/package/per-tx/bps, so a drainer holding the passkey could drip many under-per-tx-cap transactions past the daily cap.
