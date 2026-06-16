@@ -80,6 +80,36 @@ Goal: complete the full spec end-to-end, with every wallet capability in the spe
 - Live write e2e — 4/8 passed this session: `enclave-cosign` (local-unattested combined signature + recipient refusal + rolling-daily-cap drip refusal), `stake` digest `FKfzEoqcjkPDjK4rGrZxthdHWUw7ZpbggfTWiXf5mnmX`, `vault-recovery-execute` digest `2iMumHS5RY7qdsiTx8VSPymTK14xFuLNJjGgJg3NJpVc`, `seal-recovery` (live guardian-share decrypt).
 - Environmental (not a regression): `passkey`, `send`, `vault-execute`, and `seal-vault-recovery` failed with gRPC `RESOURCE_EXHAUSTED` (`internal` / `SimulateTransaction`) on `sui.rpc.v2.TransactionExecutionService` — the public fullnode's gRPC execute/simulate quota was exhausted by the day's sweep (same failure mode as 2026-06-12; JSON-RPC paths recovered after cooldown, gRPC stayed throttled). Most-recent passing digests stand as evidence: `passkey` `5pR4Pk2xbwrnt9PDsEtjosyZR8hGhn3afZ4t1HbjD3S1` (2026-06-12), `send` `FqnyyAMZyu2miXgwFgdAqrvXcbpeNMLun5KdbkaB85sq` (2026-06-12), `vault-execute` `J42Y7dr1mAPfdzLpTuccVsxgGfUHmHPVKHg9Znrxyhv9` (2026-06-11), `seal-vault-recovery` `7aijaqyecQCz6B3o9jVFLrijzrnk18DKm7yp4zURVPw3` (2026-06-10). Rerun these after a longer cooldown.
 
+## Sui Wallet Standard browser extension - 2026-06-16
+
+Built a real, installable MV3 wallet extension so real Sui websites can attach Aegis as their wallet
+and the safety bouncer runs on dApp-originated transactions. Replaces the prior generated vanilla shell,
+which spoke a custom `aegis:` protocol that no real dApp understands. Load runbook: `extension/README.md`.
+
+- **Wallet Standard registration:** `extension/src/inpage.ts` builds an `AegisWallet` implementing the
+  `@mysten/wallet-standard` `Wallet` interface (name "Aegis", testnet chain, features `standard:connect`/
+  `standard:disconnect`/`standard:events` + `sui:signTransaction`/`signAndExecuteTransaction`/
+  `signPersonalMessage`) and calls `registerWallet`, injected into the page MAIN world at `document_start`
+  so `@mysten/dapp-kit` discovers it. `content.ts` relays page↔background; key never leaves the extension.
+- **Background signer:** `extension/src/background.ts` (service worker) builds a `SuiJsonRpcClient`
+  (host_permissions → no page CORS), reconstructs the dApp tx via `Transaction.from(...)`, dry-runs it,
+  maps to `SimSummary` (`@aegis/shared/dry-run-summary`), runs `extension/src/risk.ts` (failed-sim / objects
+  leaving / large-outflow), opens a popup approval window, then signs with `signer.signTransaction` and
+  executes via `executeTransactionBlock`. Keys: `extension/src/keyring.ts` over `chrome.storage.local`
+  (encrypted, `extension/src/secret-box.ts`) with decrypted secrets in `chrome.storage.session`.
+- **Approval UI:** `extension/src/popup.tsx` (React) — onboarding (create/import), unlock/lock, and the
+  transaction-approval screen showing the live diff + risk findings; critical risk blocks Approve.
+- **Toolchain:** added `@mysten/wallet-standard`, `react`/`react-dom`, `esbuild` to `extension/`; rewrote
+  `scripts/build-extension.ts` to bundle `background`/`content`/`inpage`/`popup` + copy `public/*` to
+  `extension/dist`. Marked `@aegis/shared` `sideEffects:false` + added `./dry-run-summary` / `./sim-summary`
+  subpath exports so the browser bundle never pulls the Node-only passkey provider (`node:crypto`).
+- **Evidence (shell-only):** `pnpm --filter @aegis/extension typecheck` (clean), `lint` (13 files clean),
+  `test` (6: risk 4 + secret-box 2), and `pnpm build:extension` (background 407KB / popup 606KB / inpage
+  12KB / content 1KB, no `node:crypto` leak). Whole-repo `pnpm test` green: app 81, shared 28, extension 6,
+  mobile 7, sponsor 3; `pnpm typecheck` + `pnpm lint` clean; `pnpm --filter @aegis/app build` passes.
+  In-browser dApp connect/sign is verified by loading unpacked per `extension/README.md` — no
+  browser-automation/Playwright evidence is claimed (guardrail #4; user reaffirmed "no playwright").
+
 ## Functional wallet build - 2026-06-16
 
 The seeded `WalletDashboard` showcase (no inputs, no live fetch) was replaced with a real, interactive

@@ -12,6 +12,18 @@ address-poisoning, no enclave — the shipping core) and **Vault Mode** (opt-in 
 Nautilus TEE co-signer — the stretch differentiator).
 
 ## Current state (what's DONE)
+- **Real Sui Wallet Standard browser extension — BUILT 2026-06-16 (branch `chore/pre-submit-2026-06-15`).**
+  An installable MV3 wallet that real Sui dApps detect + connect to. `extension/src/inpage.ts` registers
+  an Aegis wallet via `@mysten/wallet-standard` `registerWallet` in the page MAIN world; `content.ts`
+  relays to `background.ts` (service worker) which holds `chrome.storage`-encrypted keys (AES-GCM/PBKDF2,
+  session-unlock), simulates every dApp tx via JSON-RPC `dryRunTransactionBlock` (no CORS — `host_permissions`),
+  runs the bouncer (`@aegis/shared/dry-run-summary` + `extension/src/risk.ts`), opens a React approval popup
+  (`popup.tsx`), and signs/broadcasts. Features: connect / signTransaction / signAndExecuteTransaction /
+  signPersonalMessage; **testnet** chain only. Replaced the old dead custom-protocol shell. Bundled with
+  esbuild: `pnpm build:extension` → `extension/dist` (load unpacked — see `extension/README.md`). Evidence:
+  `pnpm --filter @aegis/extension typecheck`/`lint`/`test` (risk 4 + secret-box 2) + `pnpm build:extension`
+  green; whole repo green (app 81, shared 28, extension 6, mobile 7, sponsor 3). **In-browser dApp
+  detection is verified by loading it** (no browser-automation evidence — guardrail #4, user "no playwright").
 - **Functional self-custody wallet — BUILT & PROVEN 2026-06-16 (branch `chore/pre-submit-2026-06-15`).**
   The seeded UI showcase was replaced with a real, usable wallet: local-keypair onboarding (create/import,
   password-encrypted in-browser keystore via WebCrypto), unlock/lock, live portfolio + USD + activity,
