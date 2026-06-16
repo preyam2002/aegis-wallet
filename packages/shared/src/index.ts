@@ -1,4 +1,5 @@
 export * from "./activity";
+export * from "./dry-run-summary";
 export * from "./node-passkey-provider";
 export * from "./portfolio";
 export * from "./portfolio-values";
