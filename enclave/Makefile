@@ -23,9 +23,9 @@ build-enclave: docker-build
 	$(MAKE) pcrs
 
 pcrs:
-	@PCR0=$$(grep "PCR0" $(OUT_DIR)/build-output.txt | awk '{print $$2}' | head -1); \
-	PCR1=$$(grep "PCR1" $(OUT_DIR)/build-output.txt | awk '{print $$2}' | head -1); \
-	PCR2=$$(grep "PCR2" $(OUT_DIR)/build-output.txt | awk '{print $$2}' | head -1); \
+	@PCR0=$$(sed -nE 's/.*"PCR0": "([0-9a-fA-F]{96})".*/\1/p; s/.*PCR0[^0-9a-fA-F]*([0-9a-fA-F]{96}).*/\1/p' $(OUT_DIR)/build-output.txt | head -1); \
+	PCR1=$$(sed -nE 's/.*"PCR1": "([0-9a-fA-F]{96})".*/\1/p; s/.*PCR1[^0-9a-fA-F]*([0-9a-fA-F]{96}).*/\1/p' $(OUT_DIR)/build-output.txt | head -1); \
+	PCR2=$$(sed -nE 's/.*"PCR2": "([0-9a-fA-F]{96})".*/\1/p; s/.*PCR2[^0-9a-fA-F]*([0-9a-fA-F]{96}).*/\1/p' $(OUT_DIR)/build-output.txt | head -1); \
 	test "$${#PCR0}" = "96"; \
 	test "$${#PCR1}" = "96"; \
 	test "$${#PCR2}" = "96"; \

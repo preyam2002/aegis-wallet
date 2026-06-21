@@ -1,7 +1,10 @@
 import base64, json, sys
 
 data = json.load(open(sys.argv[1]))
-buf = base64.b64decode(data["attestation_document"])
+attestation = data.get("attestation_document") or data.get("attestation")
+if not attestation:
+    raise SystemExit("expected attestation_document or attestation")
+buf = base64.b64decode(attestation)
 
 BREAK = object()
 
@@ -83,6 +86,11 @@ for idx in sorted(k for k in pcrs.keys() if isinstance(k,int)):
         print(f"PCR{idx}: {h}  (len {len(pcrs[idx])}B/{len(h)}hex){'  [ALL ZERO - debug build]' if allzero else ''}")
 pk=pd.get("public_key")
 print("public_key(doc) hex:", pk.hex() if pk else None, "len", len(pk) if pk else 0)
-print("public_key(json) hex:", base64.b64decode(data['public_key']).hex())
+json_pk = data.get("public_key")
+if json_pk:
+    json_pk_hex = base64.b64decode(json_pk).hex()
+else:
+    json_pk_hex = data.get("publicKey")
+print("public_key(json/api) hex:", json_pk_hex)
 # emit a pcr-values.json-shaped object for the aegis register script
 print("PCR_JSON:", json.dumps({"pcr0":pcrs.get(0,b'').hex(),"pcr1":pcrs.get(1,b'').hex(),"pcr2":pcrs.get(2,b'').hex()}))
