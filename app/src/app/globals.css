@@ -1246,6 +1246,136 @@ select.textInput {
 	color: var(--danger);
 }
 
+/* ---------- Live decision log (/activity) ---------- */
+.logShell {
+	max-width: 860px;
+	margin: 0 auto;
+	padding: 48px 24px 64px;
+}
+
+.logHeader {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 20px;
+	margin-bottom: 28px;
+}
+
+.logStatus {
+	flex-shrink: 0;
+	padding: 6px 12px;
+	border-radius: 999px;
+	border: 1px solid var(--line);
+	background: var(--surface-2);
+	color: var(--muted);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.logStatus.live {
+	border-color: var(--safe-line);
+	background: var(--safe-weak);
+	color: var(--safe);
+}
+
+.logStatus.offline {
+	border-color: var(--danger-line);
+	background: var(--danger-weak);
+	color: var(--danger);
+}
+
+.logFeed {
+	display: grid;
+	gap: 10px;
+}
+
+.logRow {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 16px;
+	border-radius: var(--radius);
+	background: var(--surface);
+	border: 1px solid var(--line);
+	animation: rise 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.logRow.blocked {
+	border-color: var(--danger-line);
+	background: linear-gradient(90deg, var(--danger-weak), var(--surface) 60%);
+}
+
+.logRow.accepted {
+	border-color: var(--safe-line);
+}
+
+.logIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 38px;
+	height: 38px;
+	border-radius: 10px;
+	background: var(--surface-2);
+	flex-shrink: 0;
+}
+
+.logRow.blocked .logIcon {
+	color: var(--danger);
+	background: var(--danger-weak);
+}
+
+.logRow.accepted .logIcon {
+	color: var(--safe);
+	background: var(--safe-weak);
+}
+
+.logBody {
+	min-width: 0;
+	flex: 1;
+}
+
+.logBody strong {
+	display: block;
+	font-weight: 600;
+}
+
+.logBody span {
+	display: block;
+	margin-top: 2px;
+	color: var(--muted);
+	font-size: 12px;
+	font-family: var(--font-mono), ui-monospace, monospace;
+	overflow-wrap: anywhere;
+}
+
+.logMeta {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-shrink: 0;
+}
+
+.logMeta em {
+	font-style: normal;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	color: var(--safe);
+}
+
+.logMeta em.blocked {
+	color: var(--danger);
+}
+
+@media (max-width: 560px) {
+	.logMeta {
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 6px;
+	}
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
 	.shell {

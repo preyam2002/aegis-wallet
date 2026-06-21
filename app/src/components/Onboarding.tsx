@@ -1,13 +1,8 @@
 "use client";
 
-import { KeyRound, ShieldCheck, Sparkles } from "lucide-react";
+import { KeyRound, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useWalletAccount } from "../lib/wallet-account";
-
-const enokiConfigured = Boolean(
-	process.env.NEXT_PUBLIC_ENOKI_API_KEY &&
-		process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-);
 
 type Mode = "create" | "import";
 
@@ -159,26 +154,6 @@ export const Onboarding = () => {
 								: "Import wallet"}
 					</button>
 				</form>
-
-				<div className="gateDivider">
-					<span>or</span>
-				</div>
-
-				<button
-					type="button"
-					className="primaryButton ghost"
-					disabled={!enokiConfigured}
-					title={
-						enokiConfigured
-							? "Continue with Google (zkLogin)"
-							: "Set NEXT_PUBLIC_ENOKI_API_KEY and NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable zkLogin"
-					}
-				>
-					<Sparkles size={16} />
-					{enokiConfigured
-						? "Continue with Google"
-						: "Continue with Google — configure Enoki to enable"}
-				</button>
 
 				<p className="gateNote">
 					Hot key, testnet only. Don't store mainnet funds here without a

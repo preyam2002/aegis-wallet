@@ -153,6 +153,13 @@ export const WalletDashboard = ({
 				>
 					<ShieldCheck size={20} />
 				</button>
+				<a
+					className="railButton"
+					href="/activity"
+					aria-label="Live decision log"
+				>
+					<Activity size={20} />
+				</a>
 				<button
 					className="railButton railBottom"
 					type="button"

@@ -4,7 +4,7 @@ import { WalletAccountProvider } from "../lib/wallet-account";
 import { Onboarding } from "./Onboarding";
 
 describe("Onboarding", () => {
-	it("renders the real create/import surfaces and the env-gated zkLogin button", () => {
+	it("renders the real create/import surfaces", () => {
 		const html = renderToStaticMarkup(
 			<WalletAccountProvider>
 				<Onboarding />
@@ -16,8 +16,6 @@ describe("Onboarding", () => {
 		expect(html).toContain("Import key");
 		expect(html).toContain("Create wallet");
 		expect(html).toContain("Back up before funding");
-		// zkLogin stays honest: gated until Enoki/Google env is configured.
-		expect(html).toContain("configure Enoki to enable");
 		expect(html).toContain("Hot key, testnet only");
 	});
 });

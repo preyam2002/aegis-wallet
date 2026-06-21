@@ -1,12 +1,28 @@
 import { createServer } from "node:http";
 import Anthropic from "@anthropic-ai/sdk";
 import { assessTransaction, DEFAULT_MODEL } from "./assess";
+import { createDecisionLog, type DecisionInput } from "./decisions";
 import type { AssessInput } from "./verdict";
 
 const PORT = Number(process.env.AEGIS_RISK_PORT ?? 8787);
 const MAX_BODY = 1_000_000;
 
 const client = new Anthropic();
+const decisions = createDecisionLog();
+
+const readBody = (
+	req: import("node:http").IncomingMessage,
+	onDone: (body: string) => void,
+) => {
+	let body = "";
+	req.on("data", (chunk) => {
+		body += chunk;
+		if (body.length > MAX_BODY) {
+			req.destroy();
+		}
+	});
+	req.on("end", () => onDone(body));
+};
 
 const json = (
 	res: import("node:http").ServerResponse,
@@ -61,6 +77,46 @@ const server = createServer((req, res) => {
 						error: err instanceof Error ? err.message : "assessment failed",
 					}),
 				);
+		});
+		return;
+	}
+	if (req.method === "POST" && req.url === "/decisions") {
+		readBody(req, (body) => {
+			let input: DecisionInput;
+			try {
+				input = JSON.parse(body) as DecisionInput;
+			} catch {
+				json(res, 400, { error: "invalid JSON body" });
+				return;
+			}
+			if (!input || typeof input.origin !== "string") {
+				json(res, 400, { error: "invalid decision" });
+				return;
+			}
+			json(res, 200, decisions.record(input));
+		});
+		return;
+	}
+	if (req.method === "GET" && req.url === "/decisions") {
+		json(res, 200, decisions.recent());
+		return;
+	}
+	if (req.method === "GET" && req.url === "/stream") {
+		res.writeHead(200, {
+			"content-type": "text/event-stream",
+			"cache-control": "no-cache",
+			connection: "keep-alive",
+		});
+		for (const decision of decisions.recent()) {
+			res.write(`data: ${JSON.stringify(decision)}\n\n`);
+		}
+		const unsubscribe = decisions.subscribe((decision) => {
+			res.write(`data: ${JSON.stringify(decision)}\n\n`);
+		});
+		const heartbeat = setInterval(() => res.write(": ping\n\n"), 25_000);
+		req.on("close", () => {
+			clearInterval(heartbeat);
+			unsubscribe();
 		});
 		return;
 	}

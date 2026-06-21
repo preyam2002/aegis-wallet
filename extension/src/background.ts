@@ -9,6 +9,7 @@ import {
 	mergeRiskLevel,
 	primaryRecipient,
 } from "./ai-risk";
+import { recordDecision } from "./decisions";
 import * as keyring from "./keyring";
 import type {
 	RuntimeMessage,
@@ -184,6 +185,17 @@ const handleSign = async (
 		ai,
 		aiUnavailable,
 	});
+
+	// Stream the decision to the website's live log (blocked criticals + accepted).
+	recordDecision({
+		origin: request.origin,
+		method: request.method,
+		riskLevel: assessment.riskLevel,
+		blocked: assessment.riskLevel === "critical",
+		approved,
+		headline: ai?.headline,
+	});
+
 	if (!approved) {
 		throw new Error("Transaction rejected in Aegis");
 	}

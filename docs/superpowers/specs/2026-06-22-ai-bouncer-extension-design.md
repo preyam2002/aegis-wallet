@@ -9,10 +9,11 @@ becomes a live log/dashboard of what the bouncer sees. The differentiator is an
 net so we never overclaim.
 
 ## Decomposition
-1. **AI risk service** (this deliverable) — backend that judges a simulated tx with Claude.
-2. **Extension wallet/approval UX** (this deliverable) — popup leads with the AI verdict.
-3. **Website streaming log** (next) — website subscribes to extension decisions (blocked/accepted).
-4. **Loose ends** — Google/zkLogin onboarding, etc.
+1. **AI risk service** (BUILT) — backend that judges a simulated tx with Claude.
+2. **Extension wallet/approval UX** (BUILT) — popup leads with the AI verdict.
+3. **Website streaming log** (BUILT) — website subscribes to extension decisions (blocked/accepted).
+
+(Google/zkLogin onboarding was dropped from scope on 2026-06-22 at the user's request.)
 
 ## Non-goals (this deliverable)
 Feature-parity with Slush; mainnet; on-chain anything new; the website log (piece 3).
@@ -56,9 +57,13 @@ dApp tx ─▶ extension background
   resolves. Critical → Approve disabled, as today. Flat-dark styling (already in place).
 - Reuse `@aegis/shared` for the summary; no chain-logic rewrite.
 
-### Piece 3 — website streaming log (next deliverable, specced separately)
-Extension emits a decision record (origin, verdict, blocked/accepted, ts) → website renders a live
-feed. Transport TBD in its own spec (likely a local relay or `chrome.storage` + a companion tab).
+### Piece 3 — website streaming log (BUILT)
+The extension's `background.ts` emits a decision record (origin, method, merged riskLevel,
+blocked/accepted, AI headline) to the risk-service `POST /decisions` (fire-and-forget — a missing
+service never affects signing). The risk-service keeps an in-memory ring buffer (`createDecisionLog`)
+and exposes `GET /decisions` + an SSE `GET /stream`. The website's `/activity` route subscribes via
+`EventSource` and renders a live, severity-tinted feed of blocked vs. accepted transactions. The
+risk-service is the local hub (CORS `*`), so the website (`:3030`) tails the service (`:8787`).
 
 ## Honesty constraints (binding)
 - The AI verdict is advisory + probabilistic; the deterministic hard-floor is what the safety
