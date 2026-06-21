@@ -3,6 +3,7 @@ packages:
   - extension
   - mobile
   - packages/*
+  - risk-service
   - sponsor
 allowBuilds:
   esbuild: true

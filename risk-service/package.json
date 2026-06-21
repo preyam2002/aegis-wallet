@@ -1,0 +1,26 @@
+{
+	"name": "@aegis/risk-service",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"dev": "tsx src/server.ts",
+		"lint": "biome check .",
+		"test": "vitest run",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@aegis/shared": "workspace:*",
+		"@anthropic-ai/sdk": "^0.69.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.4.16",
+		"@types/node": "22.19.19",
+		"tsx": "^4.20.6",
+		"typescript": "5.9.3",
+		"vitest": "2.1.9"
+	}
+}
