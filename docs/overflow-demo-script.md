@@ -36,11 +36,16 @@ Target length: ~3 minutes. Every beat maps to a real, reproducible command or a 
 
 ## Beat 5 — Vault Mode refuses a drain on-chain (30s)
 
-- **Show:** switch to the **Security** tab. Vault Mode (2-of-2 passkey + enclave) shows the `nitro-attested` proof — registered enclave, the benign 2-of-2 digest, and the on-chain `PolicyRejected` receipt from a seeded drain the co-signer refused. The under-signed tx cannot land.
-- **Backing command:** `pnpm test:integration:policy-receipts` — re-queries the live on-chain `PolicyPassed` / `PolicyRejected` receipts via `suix_queryEvents`, so the digest on screen is verifiable against the chain in real time (no enclave/tunnel needed).
-- **Backing digests:** attested benign 2-of-2 execution `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko`; on-chain `PolicyRejected` `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX` (reason `recipient is not allowlisted`); registered enclave `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e`.
+- **Show:** switch to the **Security** tab — Vault Mode (2-of-2 passkey + enclave) shows the live `nitro-attested` proof: registered enclave, benign 2-of-2 digest, and the on-chain `PolicyRejected` receipt. Then run the live co-sign in the terminal.
+- **Backing command (live co-sign through the AWS Nitro enclave):**
+  ```
+  AEGIS_ENCLAVE_URL=http://127.0.0.1:3320 \
+  AEGIS_REGISTERED_ENCLAVE_ID=0xb87f92d67204ec753439a46080180a0ea7cb0b1b356ddc634149821aefc951a4 \
+  pnpm test:integration:vault-execute
+  ```
+  (Requires the SSH tunnel `ssh -N -L 3320:127.0.0.1:3000 …` to the EC2 enclave open.) It asserts the live enclave key matches the on-chain registration, executes a benign 2-of-2 transfer, sends a seeded drain to a non-allowlisted recipient, and the enclave **refuses** it — emitting a fresh `PolicyRejected`.
+- **Backing digests (live run 2026-06-22):** registered enclave `0xb87f92d67204ec753439a46080180a0ea7cb0b1b356ddc634149821aefc951a4`; enclave key `db26feb8f8ac6e91980718534d87358dfa857765435cbccb9dda89f4ff40e2c3`; benign 2-of-2 `Rkm8NFgPw6MLm9ZUzySb6syBbkN9b4zcy4wDXrxvyVd`; `PolicyRejected` `CoGtcaVzqxAsev4nJJr9Fzqs6TFxBVf8Cw8hLD9GaCC` (reason `recipient is not allowlisted`). Confirm on chain with `pnpm test:integration:policy-receipts`.
 - **Honest line (verbatim):** "Vault Mode is drain-resistant under the AWS-Nitro plus reproducible-build trust model — not provably un-drainable. Today's evidence is a non-debug Nitro enclave registered on testnet; mainnet and production availability are not claimed."
-- **Optional deeper proof (only if you want a live co-sign on camera):** bring the EC2 Nitro enclave up to current registration and run `AEGIS_ENCLAVE_URL=http://127.0.0.1:3320 AEGIS_REGISTERED_ENCLAVE_ID=<current> pnpm test:integration:vault-execute`. Skipped by default — the enclave reboots with a fresh ephemeral key, so this needs an on-chain re-registration first.
 
 ## Close (15s)
 
@@ -53,6 +58,6 @@ Target length: ~3 minutes. Every beat maps to a real, reproducible command or a 
 | 1 | `pnpm test:integration:wallet-snapshot` |
 | 2 | `pnpm test:integration:simulate` |
 | 3, 4 | `pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts` |
-| 5 | `pnpm test:integration:policy-receipts` (live re-query of the on-chain receipts; `vault-execute` is optional and needs the enclave re-registered first) |
+| 5 | `AEGIS_ENCLAVE_URL=http://127.0.0.1:3320 AEGIS_REGISTERED_ENCLAVE_ID=0xb87f92d67204ec753439a46080180a0ea7cb0b1b356ddc634149821aefc951a4 pnpm test:integration:vault-execute` (live co-sign; needs the SSH tunnel) + `pnpm test:integration:policy-receipts` |
 
 **External (user does these):** screen + voice recording, and uploading the final video. Codex cannot record or operate the camera/mic.

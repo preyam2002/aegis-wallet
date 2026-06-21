@@ -51,7 +51,7 @@ describe("WalletDashboard", () => {
 
 		expect(html).toContain("Vault Mode");
 		expect(html).toContain("nitro-attested");
-		expect(html).toContain("8P6f...HDQX");
+		expect(html).toContain("CoGt...GaCC");
 		expect(html).toContain("Export secret key");
 	});
 });

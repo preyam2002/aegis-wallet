@@ -25,15 +25,15 @@ export const VaultModePanel = () => (
 			</div>
 			<div>
 				<span>Registered enclave</span>
-				<strong>0xfe61...4e0e</strong>
+				<strong>0xb87f...51a4</strong>
 			</div>
 			<div>
 				<span>Benign 2-of-2 tx</span>
-				<strong>9pP9...Psyko</strong>
+				<strong>Rkm8...vyVd</strong>
 			</div>
 			<div>
 				<span>PolicyRejected</span>
-				<strong>8P6f...HDQX</strong>
+				<strong>CoGt...GaCC</strong>
 			</div>
 			<div>
 				<span>Trust model</span>
