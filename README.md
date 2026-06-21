@@ -14,11 +14,21 @@ Sui has no Blockaid, no ScamSniffer, no transaction firewall. A single malicious
 
 These are the surfaces a judge can watch *block a live drain*: feed a denylisted recipient, a wallet sweep, an unverified package, or a poisoned look-alike, and the signing screen refuses to go green. The deterministic backbone of that demo is committed in `app/src/lib/safe-wallet-demo.test.ts`.
 
-## Vault Mode (opt-in stretch)
+## Vault Mode (opt-in testnet proof)
 
 Vault Mode is a **2-of-2 native multisig** where the second signer is a Nautilus TEE enclave that independently simulates each transaction and only co-signs if it passes published policy. A phished user signature alone is 1-of-2 and the network rejects it; the enclave refuses drains and can emit an on-chain `PolicyPassed` / `PolicyRejected` receipt.
 
-**Honest trust framing:** Vault Mode is *drain-resistant under the AWS-Nitro + reproducible-build trust model* — **not** "provably un-drainable." It is a hardware-TEE plus reproducible-build model, not ZK. Nautilus is an official Mysten template, not an audited product. The repo today runs the co-signer in `local-unattested` mode for development and testnet demos; a **real attested Nitro/Marlin enclave registered on-chain is a stretch goal, not a shipped guarantee.** No attested co-signing is claimed without a real attestation document on-chain.
+**Honest trust framing:** Vault Mode is *drain-resistant under the AWS-Nitro + reproducible-build trust model* — **not** "provably un-drainable." It is a hardware-TEE plus reproducible-build model, not ZK. Nautilus is an official Mysten template, not an audited product. Current evidence is testnet only: a non-debug AWS Nitro enclave is registered on-chain and the registered public key matches the live `nitro-attested` co-signer. Mainnet and production availability are not claimed.
+
+Current testnet Vault proof:
+
+| Artifact | ID / digest |
+| --- | --- |
+| EnclaveConfig | `0xb5f8cc7c85c21485ef75affcec55f093650e320c63e2d5d36000dc80bbd03281` |
+| Registered enclave | `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e` |
+| Live enclave public key | `533419d87e9b218e61a8128d2b86e3a2248137b92e174adb1895f0892df340d0` |
+| Attested 2-of-2 benign tx | `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko` |
+| Fresh `PolicyRejected` receipt | `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX` |
 
 ## Structure
 
@@ -41,7 +51,7 @@ pnpm typecheck
 pnpm lint
 pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts   # the "blocks a drainer" demo backbone
 pnpm --filter @aegis/app dev
-pnpm preflight:external-gates          # diagnostic: lists required Nitro/Marlin, Enoki, staking, mainnet gates; browser/native is optional proof
+pnpm preflight:external-gates          # diagnostic: checks Nitro attestation artifacts, Enoki, staking, and mainnet gates; browser/native is optional proof
 pnpm test:integration:simulate         # maps a real testnet PTB into SimSummary
 pnpm test:integration:wallet-snapshot  # live testnet portfolio/activity/DeFi snapshot
 pnpm test:integration:swap-quote       # mainnet read-only, zero-wallet-fee swap route
@@ -54,6 +64,25 @@ cd ../move/aegis
 MOVE_HOME=/private/tmp/aegis-move-home sui move test
 ```
 
+## Fast local demo
+
+```bash
+pnpm --filter @aegis/app dev
+```
+
+Open `http://localhost:3030`. The wallet has two tabs in the left rail:
+
+- **Wallet** — leads with the safety demo (**See it block a drain** runs read-only drainer, wallet-sweep,
+  untrusted-package, and poisoned-address previews with no funds at risk), then live portfolio / receive
+  (real QR + testnet faucet) / activity. The send and stake flows do the live nutrition-label path: build
+  PTB, dry-run, show net change, gas, objects leaving, findings, then sign only if the risk is not critical.
+- **Security** — account settings (backup status + key export) and the testnet-attested Vault Mode proof,
+  grouped as on-chain evidence rather than mixed into the daily-driver surface.
+
+First-run wallet hygiene is explicit: created accounts must back up the `suiprivkey...` before the
+dashboard opens, and unlocked accounts can export the secret key from the Security tab after entering the
+wallet password. This is testnet-only hot-key custody, not a mainnet hardware-wallet claim.
+
 ## Trust Model
 
-Vault Mode should be described narrowly: it blocks configured drain classes when the transaction requires both the user signature and a reachable enclave co-signature, and when the enclave PCR / public key is registered and verified on-chain. This is a TEE plus reproducible-build trust model, not ZK and not unconditional un-drainability. The Safe Wallet layer (simulation, risk scanner, address-poisoning) needs no enclave and is the shipping core; Vault Mode is opt-in and depends on the external attestation gate.
+Vault Mode should be described narrowly: it blocks configured drain classes when the transaction requires both the user signature and a reachable enclave co-signature, and when the enclave PCR / public key is registered and verified on-chain. This is a TEE plus reproducible-build trust model, not ZK and not unconditional un-drainability. The Safe Wallet layer (simulation, risk scanner, address-poisoning) needs no enclave and is the shipping core; Vault Mode is opt-in and currently proven on testnet with a non-debug AWS Nitro enclave.

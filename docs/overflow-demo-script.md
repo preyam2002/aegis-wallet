@@ -34,14 +34,13 @@ Target length: ~3 minutes. Every beat maps to a real, reproducible command or a 
 - **Exact copy on screen:** finding **"Address looks like a saved contact" — "0x9999…0001 has the same prefix and same suffix as Treasury."**
 - **Say:** "Poisoning attacks rely on you not reading the middle of the address. Aegis reads it for you."
 
-## Beat 5 — (Stretch) Vault Mode refuses a drain on-chain (30s)
+## Beat 5 — Vault Mode refuses a drain on-chain (30s)
 
-> Only show this beat if the real attested enclave (Phase 2) has landed. Otherwise present it as the honest local-enclave/testnet path and say so.
-
-- **Show:** a Vault account (2-of-2 passkey + enclave) where a seeded drain PTB is refused by the co-signer; the under-signed tx cannot land; an on-chain `PolicyRejected` receipt appears in the Vault panel.
-- **Backing command:** `pnpm test:integration:vault-execute` (benign 2-of-2 executes; seeded drain to a non-allowlisted recipient is refused).
-- **Backing digests:** benign 2-of-2 execution `8WZkPFPEiU1PpSh8rCozC6Y6y7bm26kPwn5q7Y6ey9k5`; on-chain `PolicyRejected` `G2pDdgmuJfUNGTk27CtgETgrFWnuwviR3pZkPHhJFjcE` (resolvable via `pnpm test:integration:policy-receipts`).
-- **Honest line (verbatim):** "Vault Mode is drain-resistant under the AWS-Nitro plus reproducible-build trust model — not provably un-drainable. Today's evidence is the local-unattested co-signer on testnet; a real attested enclave registered on-chain is the stretch."
+- **Show:** switch to the **Security** tab. Vault Mode (2-of-2 passkey + enclave) shows the `nitro-attested` proof — registered enclave, the benign 2-of-2 digest, and the on-chain `PolicyRejected` receipt from a seeded drain the co-signer refused. The under-signed tx cannot land.
+- **Backing command:** `pnpm test:integration:policy-receipts` — re-queries the live on-chain `PolicyPassed` / `PolicyRejected` receipts via `suix_queryEvents`, so the digest on screen is verifiable against the chain in real time (no enclave/tunnel needed).
+- **Backing digests:** attested benign 2-of-2 execution `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko`; on-chain `PolicyRejected` `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX` (reason `recipient is not allowlisted`); registered enclave `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e`.
+- **Honest line (verbatim):** "Vault Mode is drain-resistant under the AWS-Nitro plus reproducible-build trust model — not provably un-drainable. Today's evidence is a non-debug Nitro enclave registered on testnet; mainnet and production availability are not claimed."
+- **Optional deeper proof (only if you want a live co-sign on camera):** bring the EC2 Nitro enclave up to current registration and run `AEGIS_ENCLAVE_URL=http://127.0.0.1:3320 AEGIS_REGISTERED_ENCLAVE_ID=<current> pnpm test:integration:vault-execute`. Skipped by default — the enclave reboots with a fresh ephemeral key, so this needs an on-chain re-registration first.
 
 ## Close (15s)
 
@@ -54,6 +53,6 @@ Target length: ~3 minutes. Every beat maps to a real, reproducible command or a 
 | 1 | `pnpm test:integration:wallet-snapshot` |
 | 2 | `pnpm test:integration:simulate` |
 | 3, 4 | `pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts` |
-| 5 (stretch) | `pnpm test:integration:vault-execute`, `pnpm test:integration:policy-receipts` |
+| 5 | `pnpm test:integration:policy-receipts` (live re-query of the on-chain receipts; `vault-execute` is optional and needs the enclave re-registered first) |
 
 **External (user does these):** screen + voice recording, and uploading the final video. Codex cannot record or operate the camera/mic.

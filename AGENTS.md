@@ -41,10 +41,11 @@ can fail with `RESOURCE_EXHAUSTED` when the public RPC is rate-limited — that'
 1. **Never overclaim Vault Mode.** It is *"drain-resistant under the AWS-Nitro + reproducible-build trust
    model"* — never "provably un-drainable." TEE + reproducible build, NOT ZK. Nautilus is an official
    template, not an audited product.
-2. **No faked attestation.** The enclave currently runs `local-unattested`. Never claim attested
-   co-signing without a real **non-debug** Nitro attestation document registered on-chain. (Aletheia's
-   `~/repo/Aletheia/attestation.json` is a debug build — all-zero PCRs, key in `user_data` — and is NOT a
-   valid anchor. Reuse its box + scripts only.)
+2. **No faked attestation.** Current attested co-signing evidence is **testnet only**: a real
+   **non-debug** Nitro attestation document is registered on-chain for the Aegis enclave. Never claim
+   mainnet or production Vault availability from that. (Aletheia's old `~/repo/Aletheia/attestation.json`
+   is a debug build — all-zero PCRs, key in `user_data` — and is NOT a valid anchor. Reuse its box +
+   scripts only.)
 3. **Cut scope stays cut** (spec §1 non-goals): no fiat on-ramp, no cross-chain bridge, no advanced
    consumer trading (perps/prediction-markets/tokenized-stocks/chat/cash-card), no ERC-20-style allowance
    revoker (Sui has no standing allowances).
@@ -56,6 +57,7 @@ can fail with `RESOURCE_EXHAUSTED` when the public RPC is rate-limited — that'
 ## Where the plan lives
 - Live state + next steps: `HANDOFF.md`
 - Evidence log: `tasklist.md`
+- Local Nitro/Vault ops guide for future agents: `docs/local-nitro-vault-agent-guide.md`
 - Plan: `docs/superpowers/plans/2026-06-04-aegis-completion.md`
 - Spec (binding non-goals): `docs/specs/aegis-wallet-build-ready-spec.md`
 - Judge materials: `docs/overflow-{pitch,demo-script,submission}.md`

@@ -12,6 +12,8 @@ Take Aegis from a feature-complete prototype to a **submittable Sui Overflow 202
 - **MVP vs stretch:** Phase 1 (Safe Wallet, ships) is the submission floor. Phase 2 (Vault Mode real attestation) is a stretch differentiator. Phase 3 is the demo video + DeepSurge submission. The entry is valid and submittable at the end of Phase 1 alone.
 - **Deadline: June 21 2026 PT** (~17 days from 2026-06-04). ~50% of judging is real-world application; half the prize unlocks on **mainnet deploy**.
 
+**2026-06-18 status update:** Phase 2's Path A landed on testnet. A non-debug AWS Nitro Aegis enclave is registered on-chain with EnclaveConfig `0xb5f8cc7c85c21485ef75affcec55f093650e320c63e2d5d36000dc80bbd03281` and registered enclave `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e`; attested benign Vault tx `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko`; fresh `PolicyRejected` `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX`. This is testnet evidence only, not a mainnet/production availability claim.
+
 ### Architecture (unchanged, do not re-litigate)
 - `app/` Next.js 16 + React 19 + TypeScript strict + Biome + Vitest — wallet UI and deterministic safety analysis (`app/src/lib/*`).
 - `packages/shared/` — the `simulateTransaction` → `SimSummary` mapping and chain adapters, shared by app and enclave logic.
@@ -24,11 +26,11 @@ Take Aegis from a feature-complete prototype to a **submittable Sui Overflow 202
 
 Establish a green baseline so any later regression is attributable. Run from repo root.
 
-- [ ] **V1 — Full unit/typecheck baseline is green.** Run: `pnpm test && pnpm typecheck && pnpm lint`. AC: `pnpm test` reports the known passing counts (shared 23, app 73, extension 8, mobile 7, sponsor 3); typecheck and lint exit 0. Record exact counts.
+- [ ] **V1 — Full unit/typecheck baseline is green.** Run: `pnpm test && pnpm typecheck && pnpm lint`. AC: `pnpm test` reports the known passing counts (shared 28, app 83, extension 6, mobile 7, sponsor 3); typecheck and lint exit 0. Record exact counts.
 - [ ] **V2 — Move tests green.** Run: `MOVE_HOME=/private/tmp/aegis-move-home-test sui move test` in `move/enclave` and `move/aegis`. AC: enclave 1 test, aegis 12 tests pass.
-- [ ] **V3 — Enclave Rust tests green.** Run: `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave`. AC: 14 tests pass, including the Nitro `public_key`-binding test.
+- [ ] **V3 — Enclave Rust tests green.** Run: `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave`. AC: 23 tests pass, including the Nitro `public_key`-binding test.
 - [ ] **V4 — Live Safe-Wallet read paths still resolve testnet.** Run: `pnpm test:integration:simulate`, `pnpm test:integration:activity`, `pnpm test:integration:wallet-snapshot`. AC: each exits 0 against live testnet (simulate maps a real PTB to `SimSummary`; snapshot returns portfolio/activity/DeFi rows). If the public faucet or RPC is rate-limited, record the exact error and proceed (read paths are not the blocker).
-- [ ] **V5 — External-gate preflight reflects current blockers.** Run: `pnpm preflight:external-gates`. AC: exits 0 as a diagnostic and lists the current required Nitro/Marlin, Enoki/OAuth, staking-balance, and mainnet-spend gates; browser/device proof is optional unless explicitly re-enabled. This is the source of truth for §4.
+- [ ] **V5 — External-gate preflight reflects current blockers.** Run: `pnpm preflight:external-gates`. AC: exits 0 as a diagnostic, verifies Nitro attestation artifacts plus registered testnet enclave key, and lists the current Enoki/OAuth, staking-balance, and mainnet-spend gates; browser/device proof is optional unless explicitly re-enabled. This is the source of truth for §4.
 
 ## 3. Phased atomic tasks
 
@@ -59,22 +61,22 @@ Goal: a judge can watch Aegis **block a drainer and a poisoned-address transacti
 
 Goal: replace local-unattested evidence with a REAL attested Nitro/Marlin enclave, registered on-chain, proving an attested 2-of-2 multisig that refuses a seeded drain and emits an on-chain `PolicyRejected`. This closes acceptance tests `Spike: reproducible-build PCRs match on-chain EnclaveConfig` and `Spike: drain PTB returns enclave refusal and PolicyRejected on Explorer`.
 
-- [ ] **T2.0 — A-vs-B attestation decision GATE (blocks all Phase 2 work).** Decide and record in `tasklist.md`:
+- [x] **T2.0 — A-vs-B attestation decision GATE.** Decide and record in `tasklist.md`:
   - **(A) Replicate Aletheia AWS Nitro** — vanilla Nautilus ed25519 + own `EnclaveConfig`; matches current `enclave/`, `move/aegis::attestation`, `move/enclave`, and `scripts/register-nautilus-enclave.ts` with NO Move/multisig rework. User points Codex at the Aletheia repo/scripts/instance.
   - **(B) Marlin Oyster** — managed/Docker, no AWS, but secp256k1 + PCR16 + its own registry ⇒ Move + multisig rework (`MultiSigPublicKey` member key type, attestation parsing, registry calls).
   - **Default lean = (A)** to preserve the existing ed25519/Nautilus path. Do not provision any enclave until this gate is closed.
   - AC: decision + rationale appended to `tasklist.md`; if (B), a sub-task list for the Move/multisig rework is added before any provisioning.
   - Verify: `grep -i "attestation decision" tasklist.md` matches the recorded decision.
-- [ ] **T2.1 — Reproducible enclave build artifacts.** With the path from T2.0, produce the enclave image and PCRs using the existing `enclave/Makefile` + `enclave/Dockerfile` (production `make run`, NOT `make run-debug` which yields all-zero PCRs). This requires the external toolchain (§4); Codex prepares the commands and the `enclave/out/pcr-values.json` shape the register script expects.
+- [x] **T2.1 — Reproducible enclave build artifacts.** With the path from T2.0, produce the enclave image and PCRs using the existing `enclave/Makefile` + `enclave/Dockerfile` (production `make run`, NOT `make run-debug` which yields all-zero PCRs). This requires the external toolchain (§4); Codex prepares the commands and the `enclave/out/pcr-values.json` shape the register script expects.
   - AC: `enclave/out/pcr-values.json` (or `AEGIS_PCR0/1/2`) is populated with real 48-byte SHA-384 PCRs from a non-debug build; `make -n build-enclave` is clean.
   - Verify (local, pre-hardware): `CARGO_HOME=/private/tmp/aegis-cargo cargo test` in `enclave` stays green; `make -n build-enclave` exits 0. Real PCRs are an external gate (§4).
-- [ ] **T2.2 — Register PCR/pubkey on-chain.** Run the existing registration flow against the real attestation document: `pnpm register:enclave` (`scripts/register-nautilus-enclave.ts`) with `AEGIS_PCR0/1/2` (or `AEGIS_PCRS_JSON`) and `AEGIS_ATTESTATION_BASE64`/`AEGIS_ATTESTATION_PATH`, calling `0x2::nitro_attestation::load_nitro_attestation` then `enclave::register_enclave<AEGIS>`.
+- [x] **T2.2 — Register PCR/pubkey on-chain.** Run the existing registration flow against the real attestation document: `pnpm register:enclave` (`scripts/register-nautilus-enclave.ts`) with `AEGIS_PCR0/1/2` (or `AEGIS_PCRS_JSON`) and `AEGIS_ATTESTATION_BASE64`/`AEGIS_ATTESTATION_PATH`, calling `0x2::nitro_attestation::load_nitro_attestation` then `enclave::register_enclave<AEGIS>`.
   - AC: a real `EnclaveConfig<AEGIS>` + `Enclave<AEGIS>` exist on testnet with on-chain `pk` == the enclave's `/get_attestation` `public_key`; digests recorded in `tasklist.md`.
   - Verify: `pnpm register:enclave` exits 0 and prints the `register_enclave` digest; the `Enclave` object's `pk` matches the attested public key.
-- [ ] **T2.3 — Attested 2-of-2 benign execution.** Point the existing vault executor at the REAL attested enclave (not the local-unattested one): the enclave's `/get_attestation` must report `mode:"nitro-attested"`. Execute a benign 2-of-2 passkey+enclave multisig tx on testnet via the established path.
+- [x] **T2.3 — Attested 2-of-2 benign execution.** Point the existing vault executor at the REAL attested enclave (not the local-unattested one): the enclave's `/get_attestation` must report `mode:"nitro-attested"`. Execute a benign 2-of-2 passkey+enclave multisig tx on testnet via the established path.
   - AC: a real testnet digest from a 2-of-2 vault where the enclave signature came from an attested enclave (`mode:"nitro-attested"`), recorded in `tasklist.md`; this is the first non-local evidence for the "benign PTB → valid 2-of-2" acceptance test.
   - Verify: `pnpm test:integration:vault-execute` exits 0 with the attested enclave reachable; `pnpm test:integration:enclave-cosign` confirms `/get_attestation` mode and matching pubkey.
-- [ ] **T2.4 — Attested drain refusal + on-chain `PolicyRejected`.** Seed a drain PTB (non-allowlisted recipient / over-cap outflow); the attested enclave refuses via `/co_sign` (server-side dry-run + on-chain `Policy`), the under-signed tx cannot land, and an on-chain `PolicyRejected` receipt is emitted and surfaced in the UI.
+- [x] **T2.4 — Attested drain refusal + on-chain `PolicyRejected`.** Seed a drain PTB (non-allowlisted recipient / over-cap outflow); the attested enclave refuses via `/co_sign` (server-side dry-run + on-chain `Policy`), the under-signed tx cannot land, and an on-chain `PolicyRejected` receipt is emitted and surfaced in the UI.
   - AC: a real testnet `PolicyRejected` digest visible on an explorer, produced by the attested enclave's refusal, recorded in `tasklist.md`; closes `Spike: drain PTB → enclave refusal + PolicyRejected on Explorer`.
   - Verify: `pnpm test:integration:vault-execute` shows the refusal path and `pnpm test:integration:policy-receipts` resolves the live `PolicyRejected` digest.
 - [ ] **T2.5 — Phase 2 regression + receipts in UI.** Confirm the Vault panel surfaces the real `PolicyPassed`/`PolicyRejected` receipts and nothing regressed.
@@ -97,7 +99,7 @@ Goal: replace local-unattested evidence with a REAL attested Nitro/Marlin enclav
 
 These require human action, real credentials, or hardware Codex has no access to. Surface them early; `pnpm preflight:external-gates` tracks most.
 
-- [ ] **AWS Nitro / Marlin Oyster provisioning (Phase 2).** `oyster`, `marlin`, `nitro-cli`, `aws`, `docker` are not installed locally. Codex cannot SSH, AWS-login, or provision an enclave. For path (A) the user must point Codex at the **Aletheia** repo/scripts/running instance; for path (B) the user must stand up Marlin Oyster. Real PCRs and a real attestation document come from this gate.
+- [x] **AWS Nitro provisioning (Phase 2 testnet).** Path A was selected and executed on the Aletheia AWS Nitro box on 2026-06-18. Real PCRs, a real non-debug attestation document, on-chain registration, attested benign 2-of-2 execution, and a fresh `PolicyRejected` receipt are recorded in `tasklist.md`. Mainnet/prod availability remains separate and unclaimed.
 - [ ] **Enoki / OAuth keys (zkLogin + sponsored gas).** `NEXT_PUBLIC_ENOKI_API_KEY`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `ENOKI_PRIVATE_API_KEY` are unset. Live zkLogin stable-address and zero-SUI sponsored-tx acceptance tests stay blocked without them. (Not required for the Phase 1 MVP submission.)
 - [ ] **Mainnet deploy approval + funding.** Publishing `move/aegis` to mainnet (the prize-half criterion) spends real SUI and is gated behind `AEGIS_ALLOW_MAINNET_SPEND=true` plus a funded mainnet key. Until approved, the submitted state is mainnet read-only (acceptable).
 - [ ] **Public testnet faucet funding.** Native-staking execution and some live writes need >1 SUI; the public faucet is rate-limited. Localnet is the fallback already in place (`pnpm test:integration:localnet-stake`).
@@ -108,7 +110,7 @@ These require human action, real credentials, or hardware Codex has no access to
 ## 5. Risks & gotchas
 
 - **Crowded wallet lane.** Aegis sits next to Slush (the official Sui wallet). The ENTIRE pitch must be SAFETY, not feature parity — never market Aegis on feature count. Lead every surface with "won't let you get drained."
-- **Do NOT fake Vault Mode.** Local-enclave evidence (`mode:"local-unattested"`, `pnpm test:integration:vault-execute`) is valid for dev/testnet demos but is explicitly NOT Nitro/Marlin proof. If Phase 2 attestation does not land by the deadline, ship the Phase 1 MVP and present Vault Mode honestly as local-enclave + the ready Docker/EIF/register path. Never claim attested co-signing without a real attestation document on-chain.
+- **Do NOT overclaim Vault Mode.** The 2026-06-18 testnet proof is real non-debug Nitro evidence, but still only testnet under the AWS-Nitro + reproducible-build trust model. Never claim mainnet/prod availability or "provably un-drainable."
 - **Do NOT re-introduce cut scope.** Spec §1 non-goals: no fiat on-ramp, no cross-chain bridge, no advanced consumer trading (perps/prediction markets/tokenized stocks/chat/cash card), no ERC-20-style allowance revoker (Sui has no standing allowances). These were removed on 2026-06-03; re-adding them for the demo is a regression.
 - **`make run-debug` yields all-zero PCRs.** Phase 2 must use the production `make run` build path or registration is meaningless.
 - **No browser-automation overclaim.** The current evidence boundary is shell-rendered dashboard proof plus real testnet/mainnet command output; do not claim live browser/extension screenshots unless the user explicitly re-enables that proof path.

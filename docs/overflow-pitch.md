@@ -31,18 +31,18 @@ Around those pillars is a real daily-driver shell: live testnet portfolio/activi
 2. Simulate a normal send — plain-English diff (`pnpm test:integration:simulate`).
 3. Attempt a drainer PTB — scanner blocks with the reason (`safe-wallet-demo.test.ts` → "Known drainer recipient").
 4. Attempt a poisoned-address send — blocking side-by-side (`safe-wallet-demo.test.ts` → "Address looks like a saved contact").
-5. *(Stretch)* Vault Mode refuses a drain → on-chain `PolicyRejected` receipt.
+5. Vault Mode refuses a drain through the Nitro co-signer → on-chain `PolicyRejected` receipt.
 
 Full run-of-show: `docs/overflow-demo-script.md`.
 
-## The stretch differentiator — Vault Mode
+## The opt-in differentiator — Vault Mode
 
 A 2-of-2 native multisig whose second signer is a Nautilus TEE enclave that re-simulates each transaction and only co-signs if it passes published policy. A phished user signature alone is 1-of-2 and cannot land; the enclave refuses drains and emits an on-chain `PolicyPassed`/`PolicyRejected` receipt.
 
-**Honest framing:** *drain-resistant under the AWS-Nitro + reproducible-build trust model* — not "provably un-drainable." TEE + reproducible build, not ZK. Nautilus is an official template, not an audited product. The local-unattested co-signer works on testnet today (`pnpm test:integration:vault-execute`); a **real attested enclave registered on-chain is a stretch goal gated on external Nitro/Marlin provisioning**, and no attested co-signing is claimed without a real attestation document on-chain.
+**Honest framing:** *drain-resistant under the AWS-Nitro + reproducible-build trust model* — not "provably un-drainable." TEE + reproducible build, not ZK. Nautilus is an official template, not an audited product. Current evidence is testnet only: a non-debug AWS Nitro enclave is registered on-chain, and `pnpm test:integration:vault-execute` proved a benign 2-of-2 tx plus a seeded-drain refusal through that attested co-signer. Mainnet and production availability are not claimed.
 
 ## Status
 
-- **Safe Wallet:** demo-ready. Full unit suite green (shared 23, app 73, extension 8, mobile 7, sponsor 3), real testnet digests, passkey tx executed on testnet, Move tests green (`enclave` 1, `aegis` 12), enclave Rust tests green (14).
+- **Safe Wallet:** demo-ready. Full unit suite green (shared 28, app 83, extension 6, mobile 7, sponsor 3), real testnet digests, passkey tx executed on testnet, Move tests green (`enclave` 1, `aegis` 12), enclave Rust tests green (23).
 - **Mainnet:** read-only proven (swap route via Bluefin/Cetus). `move/aegis` mainnet publish is approval-gated behind `AEGIS_ALLOW_MAINNET_SPEND=true` (the prize-half criterion).
-- **Vault Mode attestation:** stretch, gated on the external AWS-Nitro/Marlin enclave gate.
+- **Vault Mode attestation:** non-debug AWS Nitro testnet proof landed on 2026-06-18. Registered enclave `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e`, attested benign tx `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko`, fresh `PolicyRejected` `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX`.

@@ -23,12 +23,15 @@ Aegis is a Sui wallet whose differentiator is the transaction-safety layer Sui l
 
 | Artifact | ID / digest |
 | --- | --- |
-| Aegis package (v2: policy/recovery/subaccount/attestation) | `0x204b7722d8ffd03f948f6edbe390c187c8056cb731aadffcd42f9e8ae787131b` |
+| Aegis package (current policy/recovery/subaccount/attestation) | `0x25989dc31ce2eb030ced1c06f0b926acabb2f893f868b1357b7032664c605d03` |
 | Aegis package (first-version, Seal namespace) | `0x599af3fd203d2659af114218d6c61be7ed275715da6d720cb0dc6ce043d1ef6b` |
 | Vendored Nautilus enclave package | `0x1c6960afd5f911c3d77c376ef96c58a93a0172e62fc3669be67839b93cc45079` |
 | Live Policy object | `0xa471b39a9174305699a8561da89e8612f296c8c6d2c390acff1410b34d7305ea` |
-| 2-of-2 multisig execution | `8WZkPFPEiU1PpSh8rCozC6Y6y7bm26kPwn5q7Y6ey9k5` |
-| On-chain `PolicyRejected` receipt | `G2pDdgmuJfUNGTk27CtgETgrFWnuwviR3pZkPHhJFjcE` |
+| Nitro EnclaveConfig | `0xb5f8cc7c85c21485ef75affcec55f093650e320c63e2d5d36000dc80bbd03281` |
+| Registered Nitro enclave | `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e` |
+| Live enclave public key | `533419d87e9b218e61a8128d2b86e3a2248137b92e174adb1895f0892df340d0` |
+| Attested 2-of-2 multisig execution | `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko` |
+| Fresh on-chain `PolicyRejected` receipt | `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX` |
 | On-chain `PolicyPassed` receipt | `CYAb3vHi9W6EB2wQucSRKgqr1Vt65Rkt6vFSAQMRjThU` |
 | Native send (simulate→diff proof) | `8TDM767CrrSWpRmH6xFjuFuedCTSDNb8kyvuc48jCs4B` |
 | Seal+Shamir recovered-signer vault execution | `9LppkyNfivP4Kz2VKJp7Xsh48p7AF43RknrAypGex1m2` |
@@ -40,16 +43,16 @@ Aegis is a Sui wallet whose differentiator is the transaction-safety layer Sui l
 
 ## Test evidence (reproducible)
 
-- Unit: `pnpm test` — shared 23, app 73, extension 8, mobile 7, sponsor 3.
+- Unit: `pnpm test` — shared 28, app 84, extension 6, mobile 7, sponsor 3.
 - Move: `MOVE_HOME=/private/tmp/aegis-move-home-test sui move test` — enclave 1, aegis 12.
-- Enclave (Rust): `CARGO_HOME=/private/tmp/aegis-cargo cargo test` — 14.
-- Live integrations refreshed on 2026-06-09: `simulate`, `activity`, `wallet-snapshot`, `portfolio`, `portfolio-value`, `token-metadata`, `staking-overview`, `testnet`, `swap-quote`, and `policy-receipts`.
+- Enclave (Rust): `CARGO_HOME=/private/tmp/aegis-cargo cargo test` — 23.
+- Live integrations refreshed on 2026-06-18: Nitro-attested `vault-execute`, `policy-receipts`, plus the wallet read/write probes recorded in `tasklist.md`.
 - Safety demo backbone: `pnpm --filter @aegis/app test src/lib/safe-wallet-demo.test.ts` — 4 (drainer / sweep / unverified-package / poisoned-address, each with exact user-facing copy).
 
 ## Honest-framing guardrails (do not violate in the submission)
 
 - Vault Mode: "drain-resistant under the AWS-Nitro + reproducible-build trust model," never "provably un-drainable." TEE + reproducible build, not ZK.
-- No attested co-signing claimed without a real attestation document on-chain; current co-signer evidence is `local-unattested`.
+- Current attested co-signing evidence is testnet only: a non-debug AWS Nitro enclave registered on-chain. Mainnet and production availability are not claimed.
 - No live-browser / extension-screenshot claims (shell-render + testnet digests are the evidence floor).
 - Cut scope stays cut: no fiat on-ramp, bridge, advanced consumer trading, or ERC-20-style allowance revoker.
 
