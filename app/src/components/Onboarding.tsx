@@ -68,6 +68,10 @@ export const Onboarding = () => {
 					Self-custody Sui wallet with a safety layer on every transaction. Your
 					key is encrypted with this password and stored only in this browser.
 				</p>
+				<p className="backupNotice">
+					Back up before funding. Aegis will show the secret key and require a
+					backup confirmation before the dashboard opens.
+				</p>
 
 				<div className="segmented" role="tablist">
 					<button

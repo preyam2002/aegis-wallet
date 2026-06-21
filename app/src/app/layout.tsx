@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Sora, Spline_Sans_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const sora = Sora({
+const inter = Inter({
 	subsets: ["latin"],
-	weight: ["300", "400", "500", "600", "700", "800"],
-	variable: "--font-sora",
+	weight: ["400", "500", "600", "700"],
+	variable: "--font-sans",
 	display: "swap",
 });
 
-const splineSansMono = Spline_Sans_Mono({
+const jetBrainsMono = JetBrains_Mono({
 	subsets: ["latin"],
 	weight: ["400", "500", "600"],
-	variable: "--font-spline-mono",
+	variable: "--font-mono",
 	display: "swap",
 });
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => (
-	<html lang="en" className={`${sora.variable} ${splineSansMono.variable}`}>
+	<html lang="en" className={`${inter.variable} ${jetBrainsMono.variable}`}>
 		<body>{children}</body>
 	</html>
 );

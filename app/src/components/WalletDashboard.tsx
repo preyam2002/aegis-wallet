@@ -18,11 +18,17 @@ import {
 	type LiveWalletSnapshot,
 	loadLiveWalletSnapshot,
 } from "../lib/wallet-snapshot";
+import { AccountPanel } from "./AccountPanel";
+import { BackupKeyScreen } from "./BackupKeyScreen";
 import { Onboarding } from "./Onboarding";
 import { ReceivePanel } from "./ReceivePanel";
+import { SafetyDemoPanel } from "./SafetyDemoPanel";
 import { SendModal } from "./SendModal";
 import { StakeModal } from "./StakeModal";
 import { UnlockScreen } from "./UnlockScreen";
+import { VaultModePanel } from "./VaultModePanel";
+
+type View = "wallet" | "security";
 
 const Gate = ({ children }: { children: ReactNode }) => (
 	<div className="gateWrap">
@@ -30,8 +36,52 @@ const Gate = ({ children }: { children: ReactNode }) => (
 	</div>
 );
 
-export const WalletDashboard = () => {
-	const { status, activeAddress, accounts, network, lock } = useWalletAccount();
+const SecurityIntro = () => (
+	<section className="introPanel">
+		<div className="gateBrand">
+			<ShieldCheck size={22} />
+			<div>
+				<p className="eyebrow">Security &amp; on-chain proof</p>
+				<h2>Two layers between you and a drain</h2>
+			</div>
+		</div>
+		<p className="introLead">
+			Aegis pairs a transaction firewall that runs on every signature with an
+			opt-in vault that needs a second, hardware-isolated approval. Both are
+			verified against live Sui testnet — the digests below are real.
+		</p>
+		<div className="proofGrid">
+			<div className="proofCard">
+				<span className="tag live">Shipping core</span>
+				<strong>Safe Wallet</strong>
+				<p>
+					Every send and stake is simulated, then risk-scanned for drainers,
+					wallet sweeps, untrusted packages, and address poisoning before you
+					can sign. Critical findings block the transaction.
+				</p>
+			</div>
+			<div className="proofCard">
+				<span className="tag testnet">Testnet-attested</span>
+				<strong>Vault Mode</strong>
+				<p>
+					An optional 2-of-2 account: your passkey plus an AWS Nitro enclave
+					co-signer that refuses any PTB violating policy. Drain-resistant under
+					the Nitro + reproducible-build trust model — not provably
+					un-drainable.
+				</p>
+			</div>
+		</div>
+	</section>
+);
+
+export const WalletDashboard = ({
+	initialView = "wallet",
+}: {
+	initialView?: View;
+}) => {
+	const { status, activeAddress, activeAccount, accounts, network, lock } =
+		useWalletAccount();
+	const [view, setView] = useState<View>(initialView);
 	const [suiMist, setSuiMist] = useState<bigint | null>(null);
 	const [snapshot, setSnapshot] = useState<LiveWalletSnapshot | null>(null);
 	const [snapError, setSnapError] = useState<string | null>(null);
@@ -73,6 +123,9 @@ export const WalletDashboard = () => {
 	if (status === "locked") {
 		return <UnlockScreen />;
 	}
+	if (activeAccount && !activeAccount.backupConfirmed) {
+		return <BackupKeyScreen />;
+	}
 
 	const address = activeAddress ?? "";
 	const label =
@@ -82,8 +135,23 @@ export const WalletDashboard = () => {
 		<main className="shell">
 			<aside className="rail" aria-label="Wallet navigation">
 				<div className="mark">A</div>
-				<button className="railButton active" type="button" aria-label="Wallet">
+				<button
+					className={`railButton${view === "wallet" ? " active" : ""}`}
+					type="button"
+					aria-label="Wallet"
+					aria-pressed={view === "wallet"}
+					onClick={() => setView("wallet")}
+				>
 					<Wallet size={20} />
+				</button>
+				<button
+					className={`railButton${view === "security" ? " active" : ""}`}
+					type="button"
+					aria-label="Security and proof"
+					aria-pressed={view === "security"}
+					onClick={() => setView("security")}
+				>
+					<ShieldCheck size={20} />
 				</button>
 				<button
 					className="railButton railBottom"
@@ -135,83 +203,96 @@ export const WalletDashboard = () => {
 					</div>
 				</header>
 
-				<div className="safetyBanner">
-					<ShieldCheck size={16} /> Every send is simulated and risk-scanned
-					before you sign.
-				</div>
-
-				<div className="dashboardGrid">
-					<section className="portfolioPanel">
-						<div className="sectionHeader">
-							<span>
-								<Coins size={16} /> Portfolio
-							</span>
-							<strong>{snapshot?.portfolioRows.length ?? 0}</strong>
+				{view === "wallet" ? (
+					<>
+						<div className="safetyBanner">
+							<ShieldCheck size={16} />
+							<strong>Testnet — no real funds.</strong> Every send is simulated
+							and risk-scanned before you sign.
 						</div>
-						{snapError && (
-							<p className="errorText">
-								{snapError}{" "}
-								<button
-									type="button"
-									className="linkButton"
-									onClick={() => void refresh()}
-								>
-									Retry
-								</button>
-							</p>
-						)}
-						<div className="portfolioList">
-							{snapshot?.portfolioRows.map((row) => (
-								<div className="assetRow" key={`${row.symbol}:${row.name}`}>
-									<div className="assetBadge ink">
-										{row.symbol.slice(0, 3).toUpperCase()}
-									</div>
-									<div>
-										<strong>{row.symbol}</strong>
-										<span>{row.name}</span>
-									</div>
-									<div className="rowValue">
-										<strong>{row.amount}</strong>
-										<span>{row.value}</span>
-									</div>
+
+						<div className="dashboardGrid">
+							<SafetyDemoPanel />
+
+							<section className="portfolioPanel">
+								<div className="sectionHeader">
+									<span>
+										<Coins size={16} /> Portfolio
+									</span>
+									<strong>{snapshot?.portfolioRows.length ?? 0}</strong>
 								</div>
-							))}
-							{!snapshot && !snapError && (
-								<p className="muted">Loading live balances…</p>
-							)}
-							{snapshot && snapshot.portfolioRows.length === 0 && (
-								<p className="muted">
-									No tokens yet — use Receive to fund this address.
-								</p>
-							)}
-						</div>
-					</section>
-
-					<ReceivePanel address={address} onFunded={() => void refresh()} />
-
-					<section className="activityPanel">
-						<div className="sectionHeader">
-							<span>
-								<Activity size={16} /> Activity
-							</span>
-							<strong>{snapshot?.activityRows.length ?? 0}</strong>
-						</div>
-						<div className="portfolioList">
-							{snapshot?.activityRows.map((row) => (
-								<div className="activityRow" key={row.id}>
-									<div>
-										<strong>{row.label}</strong>
-										<span>{row.status}</span>
-									</div>
-									<div className="rowValue">{row.value}</div>
+								{snapError && (
+									<p className="errorText">
+										{snapError}{" "}
+										<button
+											type="button"
+											className="linkButton"
+											onClick={() => void refresh()}
+										>
+											Retry
+										</button>
+									</p>
+								)}
+								<div className="portfolioList">
+									{snapshot?.portfolioRows.map((row) => (
+										<div className="assetRow" key={`${row.symbol}:${row.name}`}>
+											<div className="assetBadge ink">
+												{row.symbol.slice(0, 3).toUpperCase()}
+											</div>
+											<div>
+												<strong>{row.symbol}</strong>
+												<span>{row.name}</span>
+											</div>
+											<div className="rowValue">
+												<strong>{row.amount}</strong>
+												<span>{row.value}</span>
+											</div>
+										</div>
+									))}
+									{!snapshot && !snapError && (
+										<p className="muted">Loading live balances…</p>
+									)}
+									{snapshot && snapshot.portfolioRows.length === 0 && (
+										<p className="muted">
+											No tokens yet — use Receive to fund this address.
+										</p>
+									)}
 								</div>
-							))}
-							{snapshot && snapshot.activityRows.length === 0 && (
-								<p className="muted">No activity yet.</p>
-							)}
+							</section>
+
+							<ReceivePanel address={address} onFunded={() => void refresh()} />
+
+							<section className="activityPanel">
+								<div className="sectionHeader">
+									<span>
+										<Activity size={16} /> Activity
+									</span>
+									<strong>{snapshot?.activityRows.length ?? 0}</strong>
+								</div>
+								<div className="portfolioList">
+									{snapshot?.activityRows.map((row) => (
+										<div className="activityRow" key={row.id}>
+											<div>
+												<strong>{row.label}</strong>
+												<span>{row.status}</span>
+											</div>
+											<div className="rowValue">{row.value}</div>
+										</div>
+									))}
+									{snapshot && snapshot.activityRows.length === 0 && (
+										<p className="muted">No activity yet.</p>
+									)}
+								</div>
+							</section>
 						</div>
-					</section>
-				</div>
+					</>
+				) : (
+					<div className="dashboardGrid secure">
+						<SecurityIntro />
+						<AccountPanel />
+						<VaultModePanel />
+					</div>
+				)}
 			</section>
 
 			{sendOpen && suiMist !== null && (

@@ -27,6 +27,7 @@ const NETWORK: WalletNetwork = "testnet";
 type StoredAccount = {
 	address: string;
 	label: string;
+	backupConfirmed?: boolean;
 	encrypted: EncryptedKeystore;
 };
 
@@ -38,6 +39,7 @@ type WalletStore = {
 export type WalletAccountMeta = {
 	address: string;
 	label: string;
+	backupConfirmed: boolean;
 };
 
 export type WalletStatus = "loading" | "empty" | "locked" | "unlocked";
@@ -49,6 +51,7 @@ export type WalletAccountContextValue = {
 	network: WalletNetwork;
 	client: SuiJsonRpcClient;
 	signer: Ed25519Keypair | null;
+	activeAccount: WalletAccountMeta | null;
 	createAccount: (input: { label: string; password: string }) => Promise<void>;
 	importAccount: (input: {
 		label: string;
@@ -57,6 +60,8 @@ export type WalletAccountContextValue = {
 	}) => Promise<void>;
 	unlock: (password: string) => Promise<void>;
 	lock: () => void;
+	confirmBackup: (address: string) => void;
+	exportActiveSecret: (password: string) => Promise<string>;
 	setActive: (address: string) => void;
 	removeAccount: (address: string) => void;
 };
@@ -70,7 +75,14 @@ const loadStore = (): WalletStore => {
 		if (!raw) {
 			return { accounts: [], activeAddress: null };
 		}
-		return JSON.parse(raw) as WalletStore;
+		const store = JSON.parse(raw) as WalletStore;
+		return {
+			...store,
+			accounts: store.accounts.map((account) => ({
+				...account,
+				backupConfirmed: account.backupConfirmed === true,
+			})),
+		};
 	} catch {
 		return { accounts: [], activeAddress: null };
 	}
@@ -109,13 +121,18 @@ export const WalletAccountProvider = ({
 	}, []);
 
 	const adoptKeypair = useCallback(
-		async (keypair: Ed25519Keypair, label: string, password: string) => {
+		async (
+			keypair: Ed25519Keypair,
+			label: string,
+			password: string,
+			backupConfirmed: boolean,
+		) => {
 			const address = keypair.toSuiAddress();
 			const encrypted = await encryptSecret(keypair.getSecretKey(), password);
 			const next = loadStore();
 			const accounts = [
 				...next.accounts.filter((account) => account.address !== address),
-				{ address, label, encrypted },
+				{ address, label, encrypted, backupConfirmed },
 			];
 			persist({ accounts, activeAddress: address });
 			setSigner(keypair);
@@ -125,7 +142,7 @@ export const WalletAccountProvider = ({
 
 	const createAccount = useCallback(
 		async ({ label, password }: { label: string; password: string }) => {
-			await adoptKeypair(Ed25519Keypair.generate(), label, password);
+			await adoptKeypair(Ed25519Keypair.generate(), label, password, false);
 		},
 		[adoptKeypair],
 	);
@@ -141,7 +158,7 @@ export const WalletAccountProvider = ({
 			password: string;
 		}) => {
 			const keypair = Ed25519Keypair.fromSecretKey(secretKey.trim());
-			await adoptKeypair(keypair, label, password);
+			await adoptKeypair(keypair, label, password, true);
 		},
 		[adoptKeypair],
 	);
@@ -161,6 +178,34 @@ export const WalletAccountProvider = ({
 	);
 
 	const lock = useCallback(() => setSigner(null), []);
+
+	const confirmBackup = useCallback(
+		(address: string) => {
+			const next = loadStore();
+			persist({
+				...next,
+				accounts: next.accounts.map((account) =>
+					account.address === address
+						? { ...account, backupConfirmed: true }
+						: account,
+				),
+			});
+		},
+		[persist],
+	);
+
+	const exportActiveSecret = useCallback(
+		async (password: string) => {
+			const active = store.accounts.find(
+				(account) => account.address === store.activeAddress,
+			);
+			if (!active) {
+				throw new Error("no active account to export");
+			}
+			return decryptSecret(active.encrypted, password);
+		},
+		[store],
+	);
 
 	const setActive = useCallback(
 		(address: string) => {
@@ -193,11 +238,21 @@ export const WalletAccountProvider = ({
 			: signer
 				? "unlocked"
 				: "locked";
+	const accounts = store.accounts.map(
+		({ address, label, backupConfirmed }) => ({
+			address,
+			label,
+			backupConfirmed: backupConfirmed === true,
+		}),
+	);
+	const activeAccount =
+		accounts.find((account) => account.address === store.activeAddress) ?? null;
 
 	const value: WalletAccountContextValue = {
 		status,
-		accounts: store.accounts.map(({ address, label }) => ({ address, label })),
+		accounts,
 		activeAddress: store.activeAddress,
+		activeAccount,
 		network: NETWORK,
 		client,
 		signer,
@@ -205,6 +260,8 @@ export const WalletAccountProvider = ({
 		importAccount,
 		unlock,
 		lock,
+		confirmBackup,
+		exportActiveSecret,
 		setActive,
 		removeAccount,
 	};

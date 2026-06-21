@@ -15,6 +15,7 @@ describe("Onboarding", () => {
 		expect(html).toContain("Create new");
 		expect(html).toContain("Import key");
 		expect(html).toContain("Create wallet");
+		expect(html).toContain("Back up before funding");
 		// zkLogin stays honest: gated until Enoki/Google env is configured.
 		expect(html).toContain("configure Enoki to enable");
 		expect(html).toContain("Hot key, testnet only");
