@@ -253,6 +253,27 @@ const Approval = ({
 			{isSign && risk && preview.sim && (
 				<>
 					<div className={`pill ${risk.riskLevel}`}>Risk: {risk.riskLevel}</div>
+
+					{preview.ai ? (
+						<div className={`aiBlock ${preview.ai.riskLevel}`}>
+							<span className="aiTag">Aegis AI analysis</span>
+							<strong>{preview.ai.headline}</strong>
+							<p>{preview.ai.explanation}</p>
+							{preview.ai.findings.map((finding) => (
+								<div className="aiFinding" key={finding.title}>
+									<strong>{finding.title}</strong>
+									<span>{finding.detail}</span>
+								</div>
+							))}
+						</div>
+					) : preview.aiUnavailable ? (
+						<div className="aiBlock offline">
+							<span className="aiTag">AI offline</span>
+							Using on-device rules only. Start the Aegis risk service to enable
+							AI analysis.
+						</div>
+					) : null}
+
 					<div className="grid">
 						<div>
 							<span>You send</span>

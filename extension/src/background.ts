@@ -3,6 +3,12 @@ import type { SimSummary } from "@aegis/shared/sim-summary";
 import { getJsonRpcFullnodeUrl, SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { Transaction } from "@mysten/sui/transactions";
 import { fromBase64, toBase64 } from "@mysten/sui/utils";
+import {
+	type AiVerdict,
+	fetchAiVerdict,
+	mergeRiskLevel,
+	primaryRecipient,
+} from "./ai-risk";
 import * as keyring from "./keyring";
 import type {
 	RuntimeMessage,
@@ -22,6 +28,10 @@ export type PendingPreview = {
 	method: WalletRequest["method"];
 	sim?: SimSummary;
 	assessment?: TxAssessment;
+	/** AI judge verdict (advisory). Absent when the risk service is unreachable. */
+	ai?: AiVerdict;
+	/** True when the AI judge could not be reached and only rules were applied. */
+	aiUnavailable?: boolean;
 	message?: string;
 };
 
@@ -110,7 +120,13 @@ const handleConnect = async (
 const simulate = async (
 	bytes: Uint8Array,
 	sender: string,
-): Promise<{ sim: SimSummary; assessment: TxAssessment }> => {
+	origin: string,
+): Promise<{
+	sim: SimSummary;
+	assessment: TxAssessment;
+	ai?: AiVerdict;
+	aiUnavailable: boolean;
+}> => {
 	const dryRun = await client.dryRunTransactionBlock({
 		transactionBlock: bytes,
 	});
@@ -123,7 +139,25 @@ const simulate = async (
 	} catch {
 		totalMist = undefined;
 	}
-	return { sim, assessment: assessTransaction(sim, { totalMist }) };
+
+	// Deterministic rules are the hard-floor + fallback; the AI judge is advisory.
+	const deterministic = assessTransaction(sim, { totalMist });
+	const ai = await fetchAiVerdict(sim, {
+		origin,
+		sender,
+		recipient: primaryRecipient(sim),
+		knownRecipient: false,
+	});
+	const riskLevel = ai
+		? mergeRiskLevel(deterministic.riskLevel, ai.riskLevel)
+		: deterministic.riskLevel;
+
+	return {
+		sim,
+		assessment: { ...deterministic, riskLevel },
+		ai: ai ?? undefined,
+		aiUnavailable: ai === null,
+	};
 };
 
 const handleSign = async (
@@ -136,13 +170,19 @@ const handleSign = async (
 	const tx = Transaction.from(request.transaction);
 	tx.setSenderIfNotSet(request.account);
 	const bytes = await tx.build({ client });
-	const { sim, assessment } = await simulate(bytes, request.account);
+	const { sim, assessment, ai, aiUnavailable } = await simulate(
+		bytes,
+		request.account,
+		request.origin,
+	);
 
 	const approved = await requestApproval(request, {
 		origin: request.origin,
 		method: request.method,
 		sim,
 		assessment,
+		ai,
+		aiUnavailable,
 	});
 	if (!approved) {
 		throw new Error("Transaction rejected in Aegis");
