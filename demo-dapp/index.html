@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Drainer dApp — Aegis bouncer demo</title>
+		<style>
+			:root {
+				color-scheme: dark;
+				--bg: #0b0c0e;
+				--surface: #131419;
+				--surface-2: #181a20;
+				--line: #24262e;
+				--line-strong: #32353f;
+				--text: #f3f4f7;
+				--muted: #9aa0ac;
+				--faint: #6a7079;
+				--accent: #6e8bff;
+				--accent-hover: #869bff;
+				--on-accent: #0a0c12;
+				--safe: #34d6a5;
+				--danger: #f2624e;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 32px 18px;
+				background: var(--bg);
+				color: var(--text);
+				font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+				font-size: 14px;
+				line-height: 1.5;
+				letter-spacing: -0.006em;
+				-webkit-font-smoothing: antialiased;
+			}
+			.card {
+				width: 100%;
+				max-width: 520px;
+				padding: 28px;
+				border-radius: 16px;
+				background: var(--surface);
+				border: 1px solid var(--line);
+			}
+			.eyebrow {
+				margin: 0 0 8px;
+				color: var(--muted);
+				font-size: 11px;
+				font-weight: 500;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+			}
+			h1 {
+				margin: 0 0 8px;
+				font-size: 24px;
+				font-weight: 600;
+				letter-spacing: -0.025em;
+			}
+			.lead {
+				margin: 0 0 22px;
+				color: var(--muted);
+			}
+			.acct {
+				display: block;
+				margin: 0 0 18px;
+				padding: 10px 12px;
+				border-radius: 10px;
+				background: var(--surface-2);
+				border: 1px solid var(--line);
+				color: var(--accent-hover);
+				font-family: ui-monospace, "JetBrains Mono", monospace;
+				font-size: 12px;
+				overflow-wrap: anywhere;
+				min-height: 38px;
+			}
+			button {
+				font: inherit;
+				cursor: pointer;
+				min-height: 46px;
+				padding: 0 18px;
+				border-radius: 10px;
+				font-weight: 600;
+				transition:
+					background 0.15s ease,
+					border-color 0.15s ease,
+					opacity 0.15s ease;
+			}
+			button:disabled {
+				opacity: 0.45;
+				cursor: default;
+			}
+			.connect {
+				width: 100%;
+				margin-bottom: 16px;
+				background: var(--accent);
+				border: 1px solid var(--accent);
+				color: var(--on-accent);
+			}
+			.connect:hover:not(:disabled) {
+				background: var(--accent-hover);
+			}
+			.row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 12px;
+			}
+			.benign {
+				background: var(--surface-2);
+				border: 1px solid var(--line);
+				color: var(--text);
+			}
+			.benign:hover:not(:disabled) {
+				border-color: var(--line-strong);
+			}
+			.drain {
+				background: transparent;
+				border: 1px solid rgba(242, 98, 78, 0.4);
+				color: var(--danger);
+			}
+			.drain:hover:not(:disabled) {
+				background: rgba(242, 98, 78, 0.1);
+			}
+			.hint {
+				margin: 18px 0 0;
+				color: var(--faint);
+				font-size: 12px;
+				line-height: 1.5;
+			}
+			.log {
+				display: grid;
+				gap: 6px;
+				margin-top: 18px;
+				padding-top: 18px;
+				border-top: 1px solid var(--line);
+			}
+			.logLine {
+				font-family: ui-monospace, "JetBrains Mono", monospace;
+				font-size: 12px;
+				color: var(--muted);
+				overflow-wrap: anywhere;
+			}
+			.logLine.ok {
+				color: var(--safe);
+			}
+			.logLine.bad {
+				color: var(--danger);
+			}
+		</style>
+	</head>
+	<body>
+		<main class="card">
+			<p class="eyebrow">Untrusted dApp · Sui testnet</p>
+			<h1>Drainer dApp</h1>
+			<p class="lead">
+				A throwaway site that connects via the Sui Wallet Standard and asks your
+				wallet to sign. Watch the Aegis bouncer read each transaction before you
+				approve.
+			</p>
+
+			<code class="acct" id="acct">Not connected</code>
+
+			<button class="connect" id="connectBtn" type="button">Connect Aegis</button>
+
+			<div class="row">
+				<button class="benign" id="sendBtn" type="button" disabled>
+					Send 0.01 SUI
+				</button>
+				<button class="drain" id="drainBtn" type="button" disabled>
+					Drain wallet
+				</button>
+			</div>
+
+			<p class="hint">
+				The drain proposes sending ~95% of your SUI to a burn address. The Aegis
+				popup rates it <strong>critical</strong> and disables Approve — it never
+				broadcasts.
+			</p>
+
+			<div class="log" id="log"></div>
+		</main>
+		<script src="./app.js"></script>
+	</body>
+</html>
