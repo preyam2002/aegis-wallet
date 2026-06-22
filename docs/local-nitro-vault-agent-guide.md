@@ -19,13 +19,13 @@ The old Aletheia EC2 instance has been reused for Aegis. The active Aegis enclav
 
 | Item | Value |
 | --- | --- |
-| EC2 public IP | `13.51.174.115` |
-| EC2 hostname | `ec2-13-51-174-115.eu-north-1.compute.amazonaws.com` |
+| EC2 public IP | `<EC2_HOST>` |
+| EC2 hostname | `<EC2_HOST>` |
 | Region | `eu-north-1` |
 | SSH user | `ec2-user` |
-| SSH key path on this Mac | `/Users/preyam/Documents/Private stuff/Aletheia.pem` |
+| SSH key path on this Mac | `<PATH_TO_PEM>` |
 | Remote Aegis path | `~/aegis-wallet-nitro/enclave` |
-| Enclave ID | `i-039f5ae93482b6dc8-enc19edadf83775c70` |
+| Enclave ID | `<ENCLAVE_INSTANCE_ID>` |
 | Enclave CID | `16` |
 | Enclave flags | `NONE` |
 | Parent inbound bridge | `127.0.0.1:3000 -> VSOCK 16:3000` |
@@ -34,15 +34,15 @@ The old Aletheia EC2 instance has been reused for Aegis. The active Aegis enclav
 SSH command:
 
 ```bash
-ssh -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com
+ssh -i "<PATH_TO_PEM>" ec2-user@<EC2_HOST>
 ```
 
 Tunnel command:
 
 ```bash
 ssh -N -L 3320:127.0.0.1:3000 \
-  -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" \
-  ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com
+  -i "<PATH_TO_PEM>" \
+  ec2-user@<EC2_HOST>
 ```
 
 The bridge is intentionally localhost-only on the EC2 parent. Do not expose `/co_sign` publicly unless the user explicitly asks and you document the risk.
@@ -81,8 +81,8 @@ Those files are small public evidence artifacts, not private keys. The EIF, Dock
 Check remote services and enclave:
 
 ```bash
-ssh -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" \
-  ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com \
+ssh -i "<PATH_TO_PEM>" \
+  ec2-user@<EC2_HOST> \
   'systemctl is-active aegis-sui-proxy.service aegis-inbound-proxy.service && nitro-cli describe-enclaves | jq -r ".[0] | {EnclaveID, EnclaveCID, Flags}"'
 ```
 
@@ -92,7 +92,7 @@ Expected:
 active
 active
 {
-  "EnclaveID": "i-039f5ae93482b6dc8-enc19edadf83775c70",
+  "EnclaveID": "<ENCLAVE_INSTANCE_ID>",
   "EnclaveCID": 16,
   "Flags": "NONE"
 }
@@ -111,8 +111,8 @@ Check through a local tunnel:
 
 ```bash
 ssh -N -L 3320:127.0.0.1:3000 \
-  -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" \
-  ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com
+  -i "<PATH_TO_PEM>" \
+  ec2-user@<EC2_HOST>
 ```
 
 In another terminal:
@@ -191,12 +191,12 @@ curl -sS http://127.0.0.1:3000/get_attestation > /tmp/aegis-attestation.json
 Download fresh artifacts:
 
 ```bash
-scp -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" \
-  ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com:~/aegis-wallet-nitro/enclave/out/pcr-values.json \
+scp -i "<PATH_TO_PEM>" \
+  ec2-user@<EC2_HOST>:~/aegis-wallet-nitro/enclave/out/pcr-values.json \
   enclave/out/pcr-values.json
 
-scp -i "/Users/preyam/Documents/Private stuff/Aletheia.pem" \
-  ec2-user@ec2-13-51-174-115.eu-north-1.compute.amazonaws.com:/tmp/aegis-attestation.json \
+scp -i "<PATH_TO_PEM>" \
+  ec2-user@<EC2_HOST>:/tmp/aegis-attestation.json \
   enclave/attestation.json
 ```
 

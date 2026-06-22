@@ -9,7 +9,7 @@ Target length: ~3 minutes. Every beat is a real, live action — no faked steps.
 | App + live log | `pnpm --filter @aegis/app dev` → `http://localhost:3030` (and `/activity`) |
 | Demo dApp | `python3 -m http.server 4040 --bind 127.0.0.1 --directory demo-dapp` → `http://localhost:4040` |
 | AI risk service | `ANTHROPIC_API_KEY=sk-ant-… pnpm --filter @aegis/risk-service dev` → `:8787` |
-| Vault enclave tunnel | `ssh -N -L 3320:127.0.0.1:3000 -i <pem> ec2-user@13.51.174.115` (for Beat 5) |
+| Vault enclave tunnel | `ssh -N -L 3320:127.0.0.1:3000 -i <pem> ec2-user@<EC2_HOST>` (for Beat 5) |
 | Extension | `chrome://extensions` → Developer mode → **Load unpacked** → `extension/dist` |
 | Import the funded key | Aegis popup → **Import** → paste `suiprivkey…` (from `sui keytool export --key-identity cool-dichroite`) → set a password. **Do this before recording** — the field is masked, but don't film the paste. |
 | Windows | Have the **demo dApp**, the **Aegis popup**, the **`/activity` tab**, and a **terminal** ready. |
