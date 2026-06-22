@@ -23,7 +23,7 @@ export type VaultDemoResult = {
 	registeredEnclaveId: string | null;
 };
 
-export const runVaultDemo = (): Promise<VaultDemoResult> =>
+const runOnce = (): Promise<VaultDemoResult> =>
 	new Promise((resolve, reject) => {
 		const child = spawn("pnpm", ["test:integration:vault-execute"], {
 			cwd: repoRoot,
@@ -58,3 +58,23 @@ export const runVaultDemo = (): Promise<VaultDemoResult> =>
 			);
 		});
 	});
+
+/**
+ * The passkey co-signer occasionally produces a DER signature length the curve
+ * decoder rejects (`tlv.decode: wrong value length`) — intermittent and harmless,
+ * since the failure happens before anything broadcasts. Retry a few times so the
+ * demo button is reliable.
+ */
+export const runVaultDemo = async (): Promise<VaultDemoResult> => {
+	let lastError: unknown;
+	for (let attempt = 1; attempt <= 4; attempt += 1) {
+		try {
+			return await runOnce();
+		} catch (cause) {
+			lastError = cause;
+		}
+	}
+	throw lastError instanceof Error
+		? lastError
+		: new Error("vault co-sign failed after retries");
+};
