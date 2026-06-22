@@ -869,6 +869,81 @@ h2 {
 	text-align: right;
 }
 
+/* ---------- Live Vault co-sign demo ---------- */
+.vaultDemoBtn {
+	margin-top: 16px;
+}
+
+.vaultDemoResult {
+	display: grid;
+	gap: 10px;
+	margin-top: 14px;
+}
+
+.vaultDemoRow {
+	display: flex;
+	align-items: flex-start;
+	gap: 11px;
+	padding: 13px;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--line);
+	background: var(--surface-2);
+}
+
+.vaultDemoRow.ok {
+	border-color: var(--safe-line);
+	background: var(--safe-weak);
+}
+
+.vaultDemoRow.bad {
+	border-color: var(--danger-line);
+	background: var(--danger-weak);
+}
+
+.vaultDemoRow svg {
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.vaultDemoRow.ok svg {
+	color: var(--safe);
+}
+
+.vaultDemoRow.bad svg {
+	color: var(--danger);
+}
+
+.vaultDemoRow strong {
+	display: block;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.vaultDemoRow span {
+	display: block;
+	margin-top: 2px;
+	color: var(--muted);
+	font-size: 12px;
+}
+
+.vaultDemoRow a {
+	display: inline-block;
+	margin-top: 4px;
+	color: var(--accent-hover);
+	font-size: 12px;
+	font-family: var(--font-mono), ui-monospace, monospace;
+	text-decoration: none;
+	overflow-wrap: anywhere;
+}
+
+.vaultDemoRow a:hover {
+	text-decoration: underline;
+}
+
+.vaultDemoError {
+	margin-top: 12px;
+}
+
 /* ---------- Receive / QR ---------- */
 .qrSvg {
 	max-width: 196px;

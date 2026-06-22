@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import Anthropic from "@anthropic-ai/sdk";
 import { assessTransaction, DEFAULT_MODEL } from "./assess";
 import { createDecisionLog, type DecisionInput } from "./decisions";
+import { runVaultDemo } from "./vault-demo";
 import type { AssessInput } from "./verdict";
 
 const PORT = Number(process.env.AEGIS_RISK_PORT ?? 8787);
@@ -99,6 +100,16 @@ const server = createServer((req, res) => {
 	}
 	if (req.method === "GET" && req.url === "/decisions") {
 		json(res, 200, decisions.recent());
+		return;
+	}
+	if (req.method === "POST" && req.url === "/vault-demo") {
+		runVaultDemo()
+			.then((result) => json(res, 200, result))
+			.catch((err: unknown) =>
+				json(res, 502, {
+					error: err instanceof Error ? err.message : "vault demo failed",
+				}),
+			);
 		return;
 	}
 	if (req.method === "GET" && req.url === "/stream") {
