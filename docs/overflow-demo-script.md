@@ -44,14 +44,8 @@ Keep `:8787` and the `:3320` tunnel up for the whole take. Rotate the API key af
 
 ## Beat 5 — Vault Mode: hardware-enforced refusal (30s)
 
-- **Show:** in the app, open the **Security** tab (the attested enclave + digests), then run the live co-sign in the terminal:
-  ```
-  AEGIS_ENCLAVE_URL=http://127.0.0.1:3320 \
-  AEGIS_REGISTERED_ENCLAVE_ID=0xb87f92d67204ec753439a46080180a0ea7cb0b1b356ddc634149821aefc951a4 \
-  pnpm test:integration:vault-execute
-  ```
-  It executes a benign 2-of-2 transfer, sends a seeded drain, and the AWS Nitro enclave **refuses** it on-chain.
-- **Backing digests (live):** benign `Rkm8NFgPw6MLm9ZUzySb6syBbkN9b4zcy4wDXrxvyVd`; refusal reason `recipient is not allowlisted`; on-chain `PolicyRejected` `CoGtcaVzqxAsev4nJJr9Fzqs6TFxBVf8Cw8hLD9GaCC`; registered enclave `0xb87f…51a4`.
+- **Show (no terminal):** open the **Security** tab → click **"Run a live 2-of-2 co-sign."** After ~20–30s the panel shows, on screen: the **benign 2-of-2 executed** (Suiscan link) and the enclave's **drain refusal** + on-chain **PolicyRejected** (Suiscan link). The attested-enclave proof is right above it.
+- **Backing:** the button POSTs to the local risk service, which co-signs through the AWS Nitro enclave over the SSH tunnel (`:3320`) — same proven flow as `pnpm test:integration:vault-execute`. Each click prints fresh digests (a small amount of testnet SUI moves; the drain is only ever refused). Needs `:8787` + the `:3320` tunnel up.
 - **Honest line (verbatim):** "Vault Mode is drain-resistant under the AWS-Nitro plus reproducible-build trust model — not provably un-drainable. This is a non-debug Nitro enclave registered on testnet; mainnet and production are not claimed."
 
 ## Close (15s)
