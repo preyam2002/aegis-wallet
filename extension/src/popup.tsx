@@ -296,6 +296,7 @@ const Approval = ({
 		send({ type: "popup:resolve", id: requestId, approved }).then(() =>
 			window.close(),
 		);
+	const [override, setOverride] = useState(false);
 
 	if (!state.hasAccounts) {
 		return <Onboard onDone={refresh} />;
@@ -377,18 +378,33 @@ const Approval = ({
 				</>
 			)}
 
+			{blocked && (
+				<p className="overrideWarn">
+					Aegis flagged this as <strong>critical</strong>. Rejecting is strongly
+					recommended — approving signs a transaction that may drain your
+					wallet.
+				</p>
+			)}
+
 			<div className="actions">
 				<button type="button" className="ghost" onClick={() => resolve(false)}>
 					Reject
 				</button>
 				<button
 					type="button"
-					className="primary"
-					disabled={blocked}
-					onClick={() => resolve(true)}
+					className={blocked ? "primary danger" : "primary"}
+					onClick={() => {
+						if (blocked && !override) {
+							setOverride(true);
+							return;
+						}
+						resolve(true);
+					}}
 				>
 					{blocked
-						? "Blocked — critical"
+						? override
+							? "Click again to approve anyway"
+							: "Approve anyway"
 						: preview.method === "connect"
 							? "Connect"
 							: "Approve"}

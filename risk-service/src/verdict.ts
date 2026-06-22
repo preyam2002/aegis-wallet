@@ -62,12 +62,12 @@ export const REPORT_RISK_TOOL = {
 			explanation: {
 				type: "string",
 				description:
-					"One short paragraph a non-technical user can understand: what this transaction actually does and why it is or isn't safe.",
+					"At most two short sentences for a non-technical user: what this transaction does and why it is or isn't safe. Be concise — it renders in a small popup.",
 			},
 			findings: {
 				type: "array",
 				description:
-					"Specific concrete concerns. Empty if the transfer is benign.",
+					"Up to 3 specific concerns, each a single short sentence. Empty if the transfer is benign.",
 				items: {
 					type: "object",
 					additionalProperties: false,

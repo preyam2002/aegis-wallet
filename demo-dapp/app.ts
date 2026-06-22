@@ -7,8 +7,6 @@ import { Transaction } from "@mysten/sui/transactions";
 import { getWallets } from "@mysten/wallet-standard";
 
 const TESTNET = "sui:testnet";
-const BENIGN_RECIPIENT =
-	"0x00000000000000000000000000000000000000000000000000000000c0ffee01";
 const DRAIN_RECIPIENT =
 	"0x000000000000000000000000000000000000000000000000000000000000dead";
 const FULLNODE = "https://fullnode.testnet.sui.io:443";
@@ -94,11 +92,12 @@ const connect = async () => {
 
 const sendBenign = async () => {
 	try {
-		log("Proposing a 0.01 SUI send — the bouncer should pass it…");
+		log("Proposing a 0.01 SUI transfer to your own address — the bouncer should pass it…");
 		const tx = new Transaction();
 		tx.setSender(account.address);
 		const [coin] = tx.splitCoins(tx.gas, [10_000_000]);
-		tx.transferObjects([coin], BENIGN_RECIPIENT);
+		// Send to the connected account itself — an unambiguously safe transaction.
+		tx.transferObjects([coin], account.address);
 		const out = await signAndExecute(tx);
 		log(`Approved + broadcast. Digest ${out.digest}`, "ok");
 	} catch (err) {

@@ -56,7 +56,7 @@ const requestApproval = async (
 				url: chrome.runtime.getURL(`popup.html?request=${request.id}`),
 				type: "popup",
 				width: 400,
-				height: 640,
+				height: 720,
 			})
 			.then((win) => {
 				const entry = pending.get(request.id);
@@ -143,11 +143,14 @@ const simulate = async (
 
 	// Deterministic rules are the hard-floor + fallback; the AI judge is advisory.
 	const deterministic = assessTransaction(sim, { totalMist });
+	const recipient = primaryRecipient(sim);
 	const ai = await fetchAiVerdict(sim, {
 		origin,
 		sender,
-		recipient: primaryRecipient(sim),
-		knownRecipient: false,
+		recipient,
+		// Sending to your own address is unambiguously known/safe.
+		knownRecipient:
+			!!recipient && recipient.toLowerCase() === sender.toLowerCase(),
 	});
 	const riskLevel = ai
 		? mergeRiskLevel(deterministic.riskLevel, ai.riskLevel)
