@@ -36,6 +36,30 @@ const Gate = ({ children }: { children: ReactNode }) => (
 	</div>
 );
 
+// Stable per-token color so the portfolio reads at a glance.
+const badgeStyle = (symbol: string) => {
+	let hue = 0;
+	for (const char of symbol) {
+		hue = (hue * 31 + char.charCodeAt(0)) % 360;
+	}
+	return {
+		backgroundColor: `hsl(${hue} 45% 18%)`,
+		color: `hsl(${hue} 70% 72%)`,
+	};
+};
+
+// Tint an activity amount green (inbound) / red (outbound).
+const valueTone = (value: string): string => {
+	const trimmed = value.trim();
+	if (trimmed.startsWith("-")) {
+		return "out";
+	}
+	if (trimmed.startsWith("+")) {
+		return "in";
+	}
+	return "";
+};
+
 const SecurityIntro = () => (
 	<section className="introPanel">
 		<div className="gateBrand">
@@ -179,6 +203,10 @@ export const WalletDashboard = ({
 							{snapshot ? snapshot.totalUsdValue : "—"} ·{" "}
 							<code>{shortAddress(address)}</code> · {label}
 						</p>
+						<p className="heroTag">
+							<ShieldCheck size={13} /> The Sui wallet with a bouncer — it won't
+							let you get drained.
+						</p>
 					</div>
 					<div className="actions">
 						<button
@@ -247,7 +275,10 @@ export const WalletDashboard = ({
 											// biome-ignore lint/suspicious/noArrayIndexKey: list is replaced wholesale on each refresh, so index is stable
 											key={`${row.symbol}:${row.name}:${index}`}
 										>
-											<div className="assetBadge ink">
+											<div
+												className="assetBadge"
+												style={badgeStyle(row.symbol)}
+											>
 												{row.symbol.slice(0, 3).toUpperCase()}
 											</div>
 											<div>
@@ -287,7 +318,9 @@ export const WalletDashboard = ({
 												<strong>{row.label}</strong>
 												<span>{row.status}</span>
 											</div>
-											<div className="rowValue">{row.value}</div>
+											<div className={`rowValue ${valueTone(row.value)}`}>
+												{row.value}
+											</div>
 										</div>
 									))}
 									{snapshot && snapshot.activityRows.length === 0 && (

@@ -245,6 +245,34 @@ h2 {
 	color: var(--text);
 }
 
+.heroTag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin: 8px 0 0;
+	color: var(--muted);
+	font-size: 13px;
+}
+
+.heroTag svg {
+	color: var(--accent);
+	flex-shrink: 0;
+}
+
+.rowValue.in {
+	color: var(--safe);
+}
+
+.rowValue.out {
+	color: var(--danger);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.topbar {
+		animation: rise 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+	}
+}
+
 .actions {
 	display: flex;
 	align-items: center;
