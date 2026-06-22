@@ -111,6 +111,7 @@ export const Onboarding = () => {
 							<span>Secret key</span>
 							<input
 								className="textInput"
+								type="password"
 								value={secretKey}
 								onChange={(event) => setSecretKey(event.target.value)}
 								placeholder="suiprivkey1…"

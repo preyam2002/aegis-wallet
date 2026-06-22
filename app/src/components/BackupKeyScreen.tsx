@@ -47,7 +47,7 @@ export const BackupKeyScreen = () => {
 				</p>
 
 				<div className="secretBox">
-					<span>Secret key</span>
+					<span>Secret key · hover to reveal</span>
 					<code>
 						{secretKey || "Unlock the account to reveal the secret key."}
 					</code>

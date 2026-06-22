@@ -116,7 +116,7 @@ export const AccountPanel = () => {
 
 			{secretKey && (
 				<div className="secretBox exportBox">
-					<span>Secret key</span>
+					<span>Secret key · hover to reveal</span>
 					<code>{secretKey}</code>
 					<button
 						type="button"

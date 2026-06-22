@@ -241,8 +241,12 @@ export const WalletDashboard = ({
 									</p>
 								)}
 								<div className="portfolioList">
-									{snapshot?.portfolioRows.map((row) => (
-										<div className="assetRow" key={`${row.symbol}:${row.name}`}>
+									{snapshot?.portfolioRows.map((row, index) => (
+										<div
+											className="assetRow"
+											// biome-ignore lint/suspicious/noArrayIndexKey: list is replaced wholesale on each refresh, so index is stable
+											key={`${row.symbol}:${row.name}:${index}`}
+										>
 											<div className="assetBadge ink">
 												{row.symbol.slice(0, 3).toUpperCase()}
 											</div>

@@ -589,6 +589,38 @@ h2 {
 	font-size: 13px;
 }
 
+/* Long token/activity lists scroll instead of stretching the page. */
+.portfolioList {
+	max-height: 380px;
+	overflow-y: auto;
+	margin-right: -8px;
+	padding-right: 8px;
+}
+
+.portfolioList::-webkit-scrollbar {
+	width: 8px;
+}
+
+.portfolioList::-webkit-scrollbar-thumb {
+	background: var(--surface-3);
+	border-radius: 999px;
+}
+
+.portfolioList::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.assetRow,
+.activityRow {
+	border-radius: 9px;
+	transition: background 0.12s ease;
+}
+
+.assetRow:hover,
+.activityRow:hover {
+	background: var(--surface-2);
+}
+
 .warnText {
 	color: var(--warn);
 }
@@ -924,6 +956,16 @@ code {
 	text-align: left;
 	user-select: all;
 	color: var(--text);
+	filter: blur(5px);
+	cursor: pointer;
+	transition: filter 0.12s ease;
+}
+
+/* Keep the secret key hidden by default (safe on camera); reveal on hover/focus. */
+.secretBox code:hover,
+.secretBox code:focus,
+.secretBox code:focus-within {
+	filter: none;
 }
 
 .exportBox {
