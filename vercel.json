@@ -1,0 +1,8 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"framework": null,
+	"cleanUrls": true,
+	"installCommand": "pnpm install --no-frozen-lockfile",
+	"buildCommand": "pnpm --filter @aegis/app build",
+	"outputDirectory": "app/out"
+}

@@ -22,3 +22,5 @@ sui_config/
 
 # os
 .DS_Store
+.vercel
+app/out
