@@ -31,5 +31,6 @@ await build({
 for (const file of ["manifest.json", "popup.html", "popup.css"]) {
 	cpSync(join(publicDir, file), join(outDir, file));
 }
+cpSync(join(publicDir, "icons"), join(outDir, "icons"), { recursive: true });
 
 console.log(`Aegis extension built → ${outDir}`);

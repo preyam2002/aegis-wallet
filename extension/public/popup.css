@@ -386,3 +386,80 @@ button {
 	font-size: 12px;
 	opacity: 0.85;
 }
+
+/* ---------- Brand + account view ---------- */
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	margin-bottom: 2px;
+}
+
+.brandMark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 9px;
+	background: var(--accent);
+	color: var(--on-accent);
+	font-weight: 700;
+	font-size: 15px;
+}
+
+.brandName {
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.balanceHero {
+	display: grid;
+	gap: 4px;
+	padding: 14px 16px;
+	border-radius: 12px;
+	background: var(--surface-2);
+	border: 1px solid var(--line);
+}
+
+.balanceHero span {
+	color: var(--muted);
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.balanceHero strong {
+	font-size: 24px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	font-feature-settings: "tnum" 1;
+}
+
+.rowMain {
+	display: grid;
+	gap: 2px;
+}
+
+.rowSub {
+	color: var(--muted);
+	font-size: 12px;
+	font-feature-settings: "tnum" 1;
+}
+
+.copyBtn {
+	padding: 6px 10px;
+	border-radius: 8px;
+	background: transparent;
+	border: 1px solid var(--line);
+}
+
+.copyBtn:hover {
+	border-color: var(--line-strong);
+	background: var(--surface-2);
+}
+
+.copyBtn code {
+	color: var(--accent-hover);
+}

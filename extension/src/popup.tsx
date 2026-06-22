@@ -51,6 +51,13 @@ const Field = ({
 	</label>
 );
 
+const Brand = () => (
+	<div className="brand">
+		<div className="brandMark">A</div>
+		<span className="brandName">Aegis</span>
+	</div>
+);
+
 const Onboard = ({ onDone }: { onDone: () => void }) => {
 	const [mode, setMode] = useState<"create" | "import">("create");
 	const [label, setLabel] = useState("Main account");
@@ -81,6 +88,7 @@ const Onboard = ({ onDone }: { onDone: () => void }) => {
 
 	return (
 		<div className="card">
+			<Brand />
 			<h1>Set up Aegis</h1>
 			<p className="lead">
 				A self-custody Sui wallet with a safety check on every transaction. Your
@@ -108,6 +116,7 @@ const Onboard = ({ onDone }: { onDone: () => void }) => {
 					label="Secret key (suiprivkey…)"
 					value={secretKey}
 					onChange={setSecretKey}
+					type="password"
 				/>
 			)}
 			<Field
@@ -155,6 +164,7 @@ const Unlock = ({ onDone }: { onDone: () => void }) => {
 
 	return (
 		<div className="card">
+			<Brand />
 			<h1>Unlock Aegis</h1>
 			<Field
 				label="Password"
@@ -181,25 +191,95 @@ const AccountView = ({
 }: {
 	state: State;
 	refresh: () => void;
-}) => (
-	<div className="card">
-		<h1>Aegis · Testnet</h1>
-		{state.accounts.map((account) => (
-			<div className="row" key={account.address}>
-				<strong>{account.label}</strong>
-				<code>{short(account.address)}</code>
+}) => {
+	const [balances, setBalances] = useState<Record<string, string>>({});
+	const [copied, setCopied] = useState<string | null>(null);
+
+	useEffect(() => {
+		let active = true;
+		Promise.all(
+			state.accounts.map(async (account) => {
+				try {
+					const response = await fetch("https://fullnode.testnet.sui.io:443", {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({
+							jsonrpc: "2.0",
+							id: 1,
+							method: "suix_getBalance",
+							params: [account.address],
+						}),
+					});
+					const body = await response.json();
+					return [account.address, body.result.totalBalance as string] as const;
+				} catch {
+					return [account.address, ""] as const;
+				}
+			}),
+		).then((entries) => {
+			if (active) {
+				setBalances(Object.fromEntries(entries));
+			}
+		});
+		return () => {
+			active = false;
+		};
+	}, [state.accounts]);
+
+	const total = state.accounts.reduce(
+		(sum, account) => sum + BigInt(balances[account.address] || "0"),
+		0n,
+	);
+
+	const copy = (address: string) => {
+		void navigator.clipboard.writeText(address);
+		setCopied(address);
+		setTimeout(() => setCopied(null), 1200);
+	};
+
+	return (
+		<div className="card">
+			<Brand />
+			<div className="balanceHero">
+				<span>Total balance · testnet</span>
+				<strong>{formatSui(total.toString())}</strong>
 			</div>
-		))}
-		<button
-			type="button"
-			className="ghost"
-			onClick={() => send({ type: "popup:lock" }).then(refresh)}
-		>
-			Lock wallet
-		</button>
-		<p className="lead">Connect to a Sui dApp and approve transactions here.</p>
-	</div>
-);
+			{state.accounts.map((account) => (
+				<div className="row" key={account.address}>
+					<div className="rowMain">
+						<strong>{account.label}</strong>
+						<span className="rowSub">
+							{balances[account.address] !== undefined
+								? formatSui(balances[account.address] ?? "0")
+								: "…"}
+						</span>
+					</div>
+					<button
+						type="button"
+						className="copyBtn"
+						title="Copy address"
+						onClick={() => copy(account.address)}
+					>
+						<code>
+							{copied === account.address ? "Copied" : short(account.address)}
+						</code>
+					</button>
+				</div>
+			))}
+			<button
+				type="button"
+				className="ghost"
+				onClick={() => send({ type: "popup:lock" }).then(refresh)}
+			>
+				Lock wallet
+			</button>
+			<p className="lead">
+				Connect to a Sui dApp — every transaction is checked by the Aegis
+				bouncer before you approve.
+			</p>
+		</div>
+	);
+};
 
 const Approval = ({
 	requestId,
