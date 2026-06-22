@@ -1,10 +1,27 @@
-# Aegis Wallet
+<p align="center">
+  <img src="docs/brand/aegis-wordmark.png" alt="Aegis — the Sui wallet with a bouncer" width="540" />
+</p>
 
-**Aegis is the Sui wallet that won't let you get drained — a nutrition label and a bouncer for every transaction.**
+<p align="center">
+  <b>The Sui wallet with a bouncer — an AI reads every transaction and blocks drainers before you sign.</b>
+</p>
 
-Sui has no Blockaid, no ScamSniffer, no transaction firewall. A single malicious PTB, signed once, can sweep a wallet. Aegis closes that gap. Every transaction is simulated and explained in plain English *before* you sign, scanned for drain patterns, and checked against your own history for address poisoning. The pitch is safety, not feature count.
+<p align="center">
+  <a href="https://aegis-wallet.vercel.app"><b>Live demo</b></a>
+  &nbsp;·&nbsp; <a href="https://github.com/preyam2002/aegis-wallet">Repo</a>
+  &nbsp;·&nbsp; Demo video — <i>coming soon</i>
+  &nbsp;·&nbsp; Sui Overflow 2026 · <b>DeFi &amp; Payments</b>
+</p>
 
-**Sui Overflow 2026 track: DeFi & Payments.**
+---
+
+Sui has no Blockaid, no ScamSniffer, no transaction firewall — one malicious PTB, signed once, can sweep a wallet. Aegis closes that gap on three layers:
+
+- **A real Sui Wallet Standard browser extension** that intercepts every dApp transaction, simulates it, and runs an **AI risk judge (Claude)** that explains in plain English what it does — then blocks drainers, sweeps, untrusted packages, and address poisoning before you sign. A deterministic rule floor hard-blocks catastrophic outflows, so a wrong or jailbroken model can never wave a drain through.
+- **A live decision dashboard** that streams every block and approval in real time.
+- **Vault Mode** — opt-in 2-of-2 multisig whose second signer is an AWS Nitro TEE enclave that refuses to co-sign drains, enforced on-chain.
+
+The pitch is safety, not feature count. **Sui Overflow 2026 — DeFi & Payments.**
 
 ## The three things Aegis does that Slush doesn't
 
@@ -25,10 +42,10 @@ Current testnet Vault proof:
 | Artifact | ID / digest |
 | --- | --- |
 | EnclaveConfig | `0xb5f8cc7c85c21485ef75affcec55f093650e320c63e2d5d36000dc80bbd03281` |
-| Registered enclave | `0xfe611cadba91b98fe81aaabfa50459375a256888951dd6e0f05a9db194b14e0e` |
-| Live enclave public key | `533419d87e9b218e61a8128d2b86e3a2248137b92e174adb1895f0892df340d0` |
-| Attested 2-of-2 benign tx | `9pP9YiQ8bYp9NxvqSCdaQTbMUkg3hw7NxY4pm48Psyko` |
-| Fresh `PolicyRejected` receipt | `8P6fNzmvbhraYYVmgWRzGVXKxozhPkx4eotXvoMRHDQX` |
+| Registered enclave | `0xb87f92d67204ec753439a46080180a0ea7cb0b1b356ddc634149821aefc951a4` |
+| Live enclave public key | `db26feb8f8ac6e91980718534d87358dfa857765435cbccb9dda89f4ff40e2c3` |
+| Attested 2-of-2 benign tx | `Rkm8NFgPw6MLm9ZUzySb6syBbkN9b4zcy4wDXrxvyVd` |
+| Fresh `PolicyRejected` receipt | `CoGtcaVzqxAsev4nJJr9Fzqs6TFxBVf8Cw8hLD9GaCC` |
 
 ## Structure
 
